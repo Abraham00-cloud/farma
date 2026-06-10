@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: farma
+
+  profiles:
+    active: dev
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+
+#logging:
+#  level:
+#    root: info
+#    org.springframework.security: info
+#    org.hibernate

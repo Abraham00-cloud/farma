@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/farma_db
+    username: postgres
+    password: pinpasser123
+    driver-class-name: org.postgresql.Driver
+
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+#    properties:
+#      hibernate:
+#        tenant_identifier_resolver: com.project.farma.config.tenant.TenantIdentifierResolver
+#        multi_tenant_connection_provider: com.project.farma.config.tenant.TenantConnectionProvider
