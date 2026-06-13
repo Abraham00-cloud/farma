@@ -3,12 +3,13 @@ package com.project.farma.organisation.dto;
 import com.project.farma.organisation.model.OrganisationType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record OrganisationRequestDto(
         @NotBlank(message = "Organisation name is required")
         String name,
-        @NotBlank(message = "Organisation type is required")
+        @NotNull(message = "Organisation type is required")
         OrganisationType organisationType,
         @NotBlank(message = "email is required")
         @Email(message = "Valid email is required")

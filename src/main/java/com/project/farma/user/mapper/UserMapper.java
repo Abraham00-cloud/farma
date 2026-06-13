@@ -4,17 +4,23 @@ package com.project.farma.user.mapper;
 import com.project.farma.user.dto.UserRequestDto;
 import com.project.farma.user.dto.UserResponseDto;
 import com.project.farma.user.model.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 
 @Component
+@RequiredArgsConstructor
 public class UserMapper {
+    private final PasswordEncoder passwordEncoder;
+
     public User toUserEntity(UserRequestDto requestDto) {
+        String encodedPassword = passwordEncoder.encode(requestDto.password());
         return User.builder()
                 .firstName(requestDto.firstName())
                 .lastName(requestDto.lastName())
                 .email(requestDto.email())
-                .password(requestDto.password())
+                .password(encodedPassword)
                 .role(requestDto.role())
                 .build();
     }

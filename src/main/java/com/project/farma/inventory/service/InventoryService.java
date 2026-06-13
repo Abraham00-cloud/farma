@@ -7,6 +7,7 @@ import com.project.farma.inventory.dto.InventoryResponseDto;
 import com.project.farma.inventory.mapper.InventoryMapper;
 import com.project.farma.inventory.model.Inventory;
 import com.project.farma.inventory.repository.InventoryRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,6 @@ public class InventoryService {
     @Transactional
     public InventoryResponseDto createInventory(InventoryRequestDto requestDto) {
         Farm farm = farmService.getFarmById(requestDto.farmId());
-
         Inventory inventory = inventoryMapper.toInventoryEntity(requestDto);
         inventory.setFarm(farm);
         inventory.setOrganisation(farm.getOrganisation());
@@ -36,7 +36,7 @@ public class InventoryService {
     @Transactional
     public void updateStockLevel(Long inventoryId, Double adjustmentAmount) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
 
         Double currentStock = inventory.getCurrentQuantity();
         Double newStock = currentStock + adjustmentAmount;
@@ -59,6 +59,6 @@ public class InventoryService {
 
     public Inventory getInventoryEntityById(Long inventoryId) {
         return inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Inventory not found"));
     }
 }

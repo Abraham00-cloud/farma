@@ -9,6 +9,7 @@ import com.project.farma.batch.repository.BatchRepository;
 import com.project.farma.dailyLogs.dto.DailyLogRequestDto;
 import com.project.farma.section.model.Section;
 import com.project.farma.section.service.SectionService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -68,7 +69,13 @@ public class BatchService {
 
     public Batch getBatchById(Long id) {
         return batchRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Batch not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Batch not found"));
+    }
+
+    public BatchResponseDto getBatchDetailsById(Long id) {
+        return batchRepository.findById(id)
+                .map(batchMapper::toBatchResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException("Batch not found"));
     }
 
     public void updateBatchMortality(Long batchId, Integer deathCount) {

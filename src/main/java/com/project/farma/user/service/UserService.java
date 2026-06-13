@@ -40,7 +40,7 @@ public class UserService {
         }
 
         Organisation organisation = organisationRepository.findById(requestDto.organisationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organisation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
 
         if (organisation == null) {
             throw new EntityNotFoundException("Organisation not found");
@@ -64,7 +64,7 @@ public class UserService {
                 new UsernamePasswordAuthenticationToken(loginRequestDto.email(), loginRequestDto.password())
         );
         User user = userRepository.findByEmail(loginRequestDto.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         Long organisationId = user.getOrganisation() != null ? user.getOrganisation().getId() : null;
         String token = jwtService.generateToken(loginRequestDto.email(), user.getId(), organisationId);
@@ -100,5 +100,10 @@ public class UserService {
     public User findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    }
+    public UserResponseDto getUserById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return userMapper.toUserResponseDto(user);
     }
 }

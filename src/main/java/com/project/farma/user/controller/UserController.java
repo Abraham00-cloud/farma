@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,11 +21,10 @@ import java.util.List;
 @Tag(
         name = "2. User Management",
         description = "Secure endpoints to manage corporate farm profiles, roles, and hierarchies")
+
 public class UserController {
     private final UserService userService;
-
-
-
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
     @Operation(
             summary = "Get Managers by Proprietor",
             description = "Fetches a collection of all operational Managers linked directly underneath a specific enterprise Proprietor."
@@ -33,6 +33,16 @@ public class UserController {
     public ResponseEntity<List<UserResponseDto>> getManagersByProprietor(@PathVariable Long proprietorId) {
         List<UserResponseDto> managers = userService.getUsersByProprietor(proprietorId);
         return new ResponseEntity<>(managers, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(
+            summary = "Get User Profile Details by ID",
+            description = "Retrieves core profile data metrics for a specific system user.")
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long userId) {
+        UserResponseDto user = userService.getUserById(userId);
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
 }

@@ -7,6 +7,7 @@ import com.project.farma.section.dto.SectionResponseDto;
 import com.project.farma.section.mapper.SectionMapper;
 import com.project.farma.section.model.Section;
 import com.project.farma.section.repository.SectionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class SectionService {
     @Transactional
     public void setSectionStatus(Long sectionId, boolean status) {
         Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
 
         section.setAvailable(status);
         sectionRepository.save(section);
@@ -61,7 +62,13 @@ public class SectionService {
 
     public Section getSectionEntityById(Long sectionId) {
         return sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
+    }
+
+    public SectionResponseDto getSectionDetailsById(Long sectionId) {
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
+        return sectionMapper.toSectionResponseDto(section);
     }
 
     @Transactional

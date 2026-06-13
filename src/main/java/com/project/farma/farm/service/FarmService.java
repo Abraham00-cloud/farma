@@ -55,6 +55,11 @@ public class FarmService {
                 .orElseThrow(() -> new EntityNotFoundException("Farm not found"));
     }
 
+    public FarmResponseDto getFarmDetailsById(Long farmId) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new EntityNotFoundException("Farm not found"));
+        return farmMapper.toFarmResponseDto(farm);
+    }
 
 
     private void handleOrganisationAndManagerValidation(Organisation organisation, User manager, FarmRequestDto requestDto) {
