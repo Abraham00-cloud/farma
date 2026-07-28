@@ -40,6 +40,10 @@ public class Farm {
 
     private boolean isActive;
 
+    private Double longitude;
+
+    private Double latitude;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

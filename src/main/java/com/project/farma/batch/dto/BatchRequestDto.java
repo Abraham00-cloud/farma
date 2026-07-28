@@ -1,5 +1,6 @@
 package com.project.farma.batch.dto;
 
+import com.project.farma.batch.model.Breed;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +18,9 @@ public record BatchRequestDto(
         @NotNull(message = "Start date is required")
         LocalDate startDate,
         @NotNull(message = "Expected end date is required")
-        LocalDate expectedEndDate
+        LocalDate expectedEndDate,
+        @NotNull(message = "Biological breed profile classification required")
+        Breed breed
 
 
 ) {

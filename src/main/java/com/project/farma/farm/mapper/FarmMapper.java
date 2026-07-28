@@ -12,6 +12,9 @@ public class FarmMapper {
         return Farm.builder()
                 .name(requestDto.name())
                 .address(requestDto.address())
+                .longitude(requestDto.longitude())
+                .latitude(requestDto.longitude())
+                .isActive(requestDto.isActive())
                 .build();
     }
 
@@ -19,9 +22,12 @@ public class FarmMapper {
         return new FarmResponseDto(
                 farm.getId(),
                 farm.getName(),
-                farm.getAddress(),
                 farm.getOrganisation().getId(),
-                farm.getManager().getLastName() + " "  + farm.getManager().getFirstName(),
+                farm.getManager() != null ? farm.getManager().getId() : null,
+                farm.getAddress(),
+                farm.getLatitude(),
+                farm.getLongitude(),
+                farm.isActive(),
                 farm.getCreatedAt()
         );
     }

@@ -15,6 +15,7 @@ public class InventoryMapper {
                 .unit(requestDto.unit())
                 .unitPrice(requestDto.unitPrice())
                 .lowStockThreshold(requestDto.lowStockThreshold() != null ? requestDto.lowStockThreshold() : 0.0)
+                .expiryDate(requestDto.expiryDate())
                 .build();
     }
 

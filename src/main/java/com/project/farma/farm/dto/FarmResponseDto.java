@@ -5,9 +5,12 @@ import java.time.LocalDateTime;
 public record FarmResponseDto (
         Long id,
         String name,
-        String address,
         Long organisationId,
-        String mangerName,
+        Long managerId,
+        String address,
+        Double latitude,
+        Double longitude,
+        boolean isActive,
         LocalDateTime createdAt
 ) {
 }

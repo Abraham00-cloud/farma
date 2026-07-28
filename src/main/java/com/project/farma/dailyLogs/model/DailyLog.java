@@ -29,6 +29,8 @@ public class DailyLog {
 
     private Double feedQuantityUsed;
 
+    private Double waterQuantityUsed;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "medicine_inventory_id")
     private Inventory medicineInventory;
@@ -40,6 +42,8 @@ public class DailyLog {
 
     private Integer mortalityCount;
     private Double averageWeight;
+
+    private Integer eggsCollected;
 
     private String observations;
     @ManyToOne

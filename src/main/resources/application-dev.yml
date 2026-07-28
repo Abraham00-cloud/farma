@@ -15,3 +15,9 @@ spring:
 #      hibernate:
 #        tenant_identifier_resolver: com.project.farma.config.tenant.TenantIdentifierResolver
 #        multi_tenant_connection_provider: com.project.farma.config.tenant.TenantConnectionProvider
+
+weather:
+  api:
+    key: 08257101f0d8ad6482052f9256763f90
+    base-url: https://api:openweathermap.org/data/2.5/weather
+

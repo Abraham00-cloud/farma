@@ -1,22 +1,17 @@
-package com.project.farma.section;
+package com.project.farma.section.controller;
 
 
-import com.project.farma.farm.dto.FarmResponseDto;
-import com.project.farma.farm.model.Farm;
 import com.project.farma.section.dto.SectionRequestDto;
 import com.project.farma.section.dto.SectionResponseDto;
-import com.project.farma.section.model.Section;
 import com.project.farma.section.service.SectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 

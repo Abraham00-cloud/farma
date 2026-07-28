@@ -1,28 +1,29 @@
 package com.project.farma.batch.service;
 
+import com.project.farma.batch.dto.BatchCloseRequestDto;
+import com.project.farma.batch.dto.BatchCloseResponseDto;
 import com.project.farma.batch.dto.BatchRequestDto;
 import com.project.farma.batch.dto.BatchResponseDto;
 import com.project.farma.batch.mapper.BatchMapper;
 import com.project.farma.batch.model.Batch;
 import com.project.farma.batch.model.Status;
 import com.project.farma.batch.repository.BatchRepository;
-import com.project.farma.dailyLogs.dto.DailyLogRequestDto;
 import com.project.farma.section.model.Section;
 import com.project.farma.section.service.SectionService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BatchService {
     private final SectionService sectionService;
     private final BatchRepository batchRepository;
@@ -35,6 +36,7 @@ public class BatchService {
         handleBatchValidation(section, requestDto);
 
         Batch batch = batchMapper.toBatchEntity(requestDto);
+        batch.setSection(section);
         batch.setStatus(Status.ACTIVE);
         batch.setCurrentCount(requestDto.initialCount());
         batch.setMortalityCount(0);
@@ -76,6 +78,43 @@ public class BatchService {
         return batchRepository.findById(id)
                 .map(batchMapper::toBatchResponseDto)
                 .orElseThrow(() -> new EntityNotFoundException("Batch not found"));
+    }
+
+    public List<Batch> getBatchesByFarmId(Long farmId) {
+        return batchRepository.findBySectionFarmId(farmId);
+    }
+
+    @Transactional
+    public BatchCloseResponseDto closeBatch(Long batchId, BatchCloseRequestDto closeDto) {
+        Batch batch = getBatchById(batchId);
+
+        if (batch.getStatus() == Status.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Batch is already completed and closed.");
+        }
+
+
+        batch.setStatus(Status.COMPLETED);
+        batch.setActualEndDate(closeDto.actualEndDate());
+        batchRepository.save(batch);
+
+
+        sectionService.setSectionStatus(batch.getSection().getId(), true);
+
+        log.info("Batch [{}] successfully COMPLETED. Section [{}] is now unblocked and available.",
+                batch.getBatchNumber(), batch.getSection().getName());
+
+        return new BatchCloseResponseDto(
+                batch.getId(),
+                batch.getBatchNumber(),
+                batch.getStatus(),
+                batch.getStartDate(),
+                batch.getActualEndDate(),
+                batch.getCurrentCount(),
+                closeDto.totalBirdsSold(),
+                closeDto.totalSaleRevenue(),
+                true,
+                closeDto.harvestNotes()
+        );
     }
 
     public void updateBatchMortality(Long batchId, Integer deathCount) {

@@ -5,6 +5,7 @@ import com.project.farma.batch.model.Status;
 import com.project.farma.batch.service.BatchService;
 import com.project.farma.organisation.model.Organisation;
 import com.project.farma.organisation.service.OrganisationService;
+import com.project.farma.security.TenantContext;
 import com.project.farma.transaction.dto.InternalTransactionRequestDto;
 import com.project.farma.transaction.dto.TransactionRequestDto;
 import com.project.farma.transaction.dto.TransactionResponseDto;
@@ -78,13 +79,24 @@ public class TransactionService {
                 .toList();
     }
 
-    public List<TransactionResponseDto> getBatchLedger(Long batchId, Long organisationId) {
+    public List<TransactionResponseDto> getBatchTransactions(Long batchId, Long organisationId) {
         validateBatchOwnership(batchId, organisationId);
 
         return transactionRepository.findByBatchIdAndOrganisationIdOrderByTransactionDateDesc(batchId, organisationId)
                 .stream()
                 .map(transactionMapper::toTransactionResponseDto)
                 .toList();
+    }
+
+    public List<Transaction> getRawTransactionsForFarm(Long farmId) {
+        Long organisationId = TenantContext.getTenantId();
+        return transactionRepository.findByFarmIdAndOrganisationId(farmId, organisationId);
+    }
+
+    public List<Transaction> getRawTransactionsForBatch(Long batchId) {
+        Long organisationId = TenantContext.getTenantId();
+        validateBatchOwnership(batchId, organisationId);
+        return transactionRepository.findByBatchIdAndOrganisationIdOrderByTransactionDateDesc(batchId, organisationId);
     }
 
     public Double calculateLiveBatchProfitAndLoss(Long batchId, Long organisationId) {

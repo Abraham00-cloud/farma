@@ -1,5 +1,6 @@
 package com.project.farma.batch.model;
 
+import com.project.farma.analytics.model.ProductionTarget;
 import com.project.farma.farm.model.Farm;
 import com.project.farma.organisation.model.Organisation;
 import com.project.farma.section.model.Section;
@@ -7,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.engine.internal.Cascade;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +31,13 @@ public class Batch {
     @ManyToOne
     @JoinColumn(name = "section_id", nullable = false)
     private Section section;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Breed breed;
+
+//    @OneToOne(mappedBy = "batch", cascade = CascadeType.ALL)
+//    private ProductionTarget productionTarget;
 
     @Column(nullable = false)
     private Integer initialCount;

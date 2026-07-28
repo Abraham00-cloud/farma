@@ -1,5 +1,9 @@
 package com.project.farma.dailyLogs.service;
 
+import com.project.farma.analytics.weeklyBreedStandard.model.WeeklyBreedStandard;
+import com.project.farma.analytics.weeklyBreedStandard.service.AnalyticsHelperService;
+import com.project.farma.analytics.weeklyBreedStandard.service.AutomatedWeatherService;
+import com.project.farma.analytics.weeklyBreedStandard.service.DailyLogEvaluator;
 import com.project.farma.batch.model.Batch;
 import com.project.farma.batch.service.BatchService;
 import com.project.farma.dailyLogs.dto.DailyLogRequestDto;
@@ -9,29 +13,52 @@ import com.project.farma.dailyLogs.model.DailyLog;
 import com.project.farma.dailyLogs.repository.DailyLogRepository;
 import com.project.farma.inventory.model.Inventory;
 import com.project.farma.inventory.service.InventoryService;
+import com.project.farma.security.FarmUserPrincipal;
 import com.project.farma.transaction.dto.InternalTransactionRequestDto;
 import com.project.farma.transaction.model.TransactionCategory;
 import com.project.farma.transaction.service.TransactionService;
+import com.project.farma.user.model.User;
+import com.project.farma.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DailyLogService {
     private final DailyLogMapper dailyLogMapper;
     private final BatchService batchService;
     private final DailyLogRepository dailyLogRepository;
     private final InventoryService inventoryService;
     private final TransactionService transactionService;
+    private final UserService userService;
+    private final AnalyticsHelperService analyticsHelperService;
+    private final AutomatedWeatherService automatedWeatherService;
+    private final List<DailyLogEvaluator> logEvaluators;
 
     @Transactional
     public DailyLogResponseDto createDailyLog(DailyLogRequestDto requestDto) {
         Batch batch = batchService.getBatchById(requestDto.batchId());
+
+        Object pricipal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long currentUserId;
+
+        if (pricipal instanceof FarmUserPrincipal farmUser) {
+            currentUserId = farmUser.getId();
+        } else {
+            throw new IllegalStateException("Authentication principal is missing or malformed");
+        }
 
         handleDailyLogValidation(requestDto, batch);
 
@@ -39,12 +66,50 @@ public class DailyLogService {
         dailyLog.setBatch(batch);
         dailyLog.setCreatedAt(LocalDateTime.now());
 
+        User auditorUser = userService.findById(currentUserId);
+        dailyLog.setRecordedBy(auditorUser);
+
+
         handleFeedAndMedicineInventoryValidation(requestDto, dailyLog, batch);
         batchService.updateBatchMortality(requestDto.batchId(), requestDto.mortalityCount());
 
         DailyLog savedDailyLog = dailyLogRepository.save(dailyLog);
+
+        runLogAnalyticsEngine(savedDailyLog, batch);
         return dailyLogMapper.toDailyLogResponseDto(savedDailyLog);
 
+    }
+
+    public void runLogAnalyticsEngine(DailyLog savedLog, Batch activeBatch) {
+        try {
+            // 1. Fetch historical breed benchmarks
+            WeeklyBreedStandard biologicalTarget = analyticsHelperService.getTargetForBatchAtAge(activeBatch, savedLog.getLogDate());
+
+            // 2. Automated data harvest (Zero worker data-entry overhead)
+            Map<String, Double> climateSnapshot = automatedWeatherService.fetchEnvironmentalSnapshot(activeBatch.getSection().getFarm());
+
+            // 3. Iterative Execution Loop: Process calculations through completely isolated pipelines
+            for (DailyLogEvaluator evaluator : logEvaluators) {
+                try {
+                    evaluator.evaluate(savedLog, activeBatch, biologicalTarget, climateSnapshot);
+                } catch (Exception pluginException) {
+                    // Individual safety net: If a new formula contains an error, it is contained here
+                    log.error("Analytical component [{}] encountered an error. Isolation safe. Root: {}",
+                            evaluator.getClass().getSimpleName(), pluginException.getMessage());
+                }
+            }
+        } catch (Exception globalEngineException) {
+            // Master safe-guard: Ensures analytical calculations never block or crash core operational logging
+            log.warn("Analytics engine execution bypassed for this log cycle: {}", globalEngineException.getMessage());
+        }
+    }
+
+    public List<DailyLog> getLogsForBatch(Long batchId) {
+        return dailyLogRepository.findByBatchIdOrderByLogDateAsc(batchId);
+    }
+
+    public List<DailyLog> getLogsForBatchInWindow(Long batchId, LocalDate startDate, LocalDate endDate) {
+        return dailyLogRepository.findByBatchIdAndLogDateBetweenOrderByLogDateAsc(batchId, startDate, endDate);
     }
 
     private void handleFeedAndMedicineInventoryValidation(DailyLogRequestDto requestDto, DailyLog dailyLog, Batch batch) {

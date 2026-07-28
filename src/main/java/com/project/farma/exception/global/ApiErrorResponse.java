@@ -1,4 +1,4 @@
-package com.project.farma.exception;
+package com.project.farma.exception.global;
 
 import java.time.LocalDateTime;
 import java.util.Map;

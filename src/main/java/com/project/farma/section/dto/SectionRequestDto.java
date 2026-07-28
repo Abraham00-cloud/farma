@@ -12,10 +12,10 @@ public record SectionRequestDto(
         @NotNull(message = "FarmId is required" )
         Long farmId,
 
-        @NotBlank(message = "Animal Category is required")
+        @NotNull(message = "Animal Category is required")
         AnimalCategory animalCategory,
 
-        @NotBlank(message = "Production Type is required")
+        @NotNull(message = "Production Type is required")
         ProductionType productionType,
 
         @NotNull(message = "Section Capacity is required")

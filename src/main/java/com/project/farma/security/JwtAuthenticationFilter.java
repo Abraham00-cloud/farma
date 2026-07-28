@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final CustomUserDetialService customUserDetialService;
 
 
     @Override
@@ -43,15 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                Long organisationId = jwtService.extractOrganisationId(jwt);
-                Long userId = jwtService.extractUserId(jwt);
-
-                FarmUserPrincipal userDetails = FarmUserPrincipal.builder()
-                        .id(userId)
-                        .email(userEmail)
-                        .organisationId(organisationId)
-                        .authorities(List.of(new SimpleGrantedAuthority("ROLE_USER")))
-                        .build();
+               FarmUserPrincipal userDetails = (FarmUserPrincipal) customUserDetialService.loadUserByUsername(userEmail);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -63,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    TenantContext.setTenantId(organisationId);
+                    TenantContext.setTenantId(userDetails.getOrganisationId());
 
                 }
             }

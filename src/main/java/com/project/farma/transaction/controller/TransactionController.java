@@ -57,7 +57,7 @@ public class TransactionController {
             @PathVariable Long batchId,
             @PathVariable Long organisationId
     ) {
-        List<TransactionResponseDto> ledger = transactionService.getBatchLedger(batchId, organisationId);
+        List<TransactionResponseDto> ledger = transactionService.getBatchTransactions(batchId, organisationId);
         return new ResponseEntity<>(ledger, HttpStatus.OK);
     }
 

@@ -42,10 +42,6 @@ public class UserService {
         Organisation organisation = organisationRepository.findById(requestDto.organisationId())
                 .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
 
-        if (organisation == null) {
-            throw new EntityNotFoundException("Organisation not found");
-        }
-
         User user = userMapper.toUserEntity(requestDto);
         user.setOrganisation(organisation);
 

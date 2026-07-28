@@ -1,16 +1,18 @@
-package com.project.farma.exception;
+package com.project.farma.exception.global;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.xml.bind.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.exc.InvalidFormatException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +63,38 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpMessageNotReadableExcetption(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String message = "Malformed JSON request body or invalid field values.";
+        String fieldName = "unknown";
+
+        if (ex.getCause() instanceof InvalidFormatException ife) {
+            if (ife.getTargetType() != null && ife.getTargetType().isEnum()) {
+                String acceptedValues = Arrays.toString(ife.getTargetType().getEnumConstants());
+                fieldName = ife.getPath().isEmpty() ? "unknown" : ife.getPath().get(0).getPropertyName();
+
+
+                message = String.format(
+                        "Invalid value '%s' for field '%s'. Accepted values are: %s",
+                        ife.getValue(),
+                        fieldName,
+                        acceptedValues
+                );
+            }
+        }
+        String path = request.getRequestURI();
+        Map<String, String> validationErrors = Map.of(fieldName, "Must match accepted Enum constants");
+        ApiErrorResponse errorResponse = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                message,
+                path,
+                validationErrors
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
 

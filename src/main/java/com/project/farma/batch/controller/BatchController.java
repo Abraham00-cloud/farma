@@ -1,5 +1,7 @@
 package com.project.farma.batch.controller;
 
+import com.project.farma.batch.dto.BatchCloseRequestDto;
+import com.project.farma.batch.dto.BatchCloseResponseDto;
 import com.project.farma.batch.dto.BatchRequestDto;
 import com.project.farma.batch.dto.BatchResponseDto;
 import com.project.farma.batch.model.Batch;
@@ -46,6 +48,15 @@ public class BatchController {
     public ResponseEntity<Void> updateBatchMortality(@PathVariable Long batchId, @RequestParam Integer deathCount) {
         batchService.updateBatchMortality(batchId, deathCount);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PatchMapping("/{batchId}/close")
+    @Operation(summary = "Close/Harvest a batch, release section housing, and finalize financials")
+    public ResponseEntity<BatchCloseResponseDto> closeBatch(
+            @PathVariable Long batchId,
+            @Valid @RequestBody BatchCloseRequestDto closeDto
+    ) {
+        return ResponseEntity.ok(batchService.closeBatch(batchId, closeDto));
     }
 
     @GetMapping("/{batchId}")

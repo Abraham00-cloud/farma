@@ -1,6 +1,7 @@
 package com.project.farma.security;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Builder
 @RequiredArgsConstructor
+@Getter
 public class FarmUserPrincipal implements UserDetails {
     private final Long id;
 

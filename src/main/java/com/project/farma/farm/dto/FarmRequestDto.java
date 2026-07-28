@@ -11,7 +11,12 @@ public record FarmRequestDto (
         @NotNull(message = "Farm Manager id is required")
         Long managerId,
         @NotNull(message = "Organisation id is required")
-        Long organisationId
+        Long organisationId,
+        @NotNull(message = "Latitude coordinate is required for weather engine geofencing")
+        Double latitude,
+        @NotNull(message = "Longitude coordinate is required for weather engine geofencing")
+        Double longitude,
+        boolean isActive
 
 
 ) {
