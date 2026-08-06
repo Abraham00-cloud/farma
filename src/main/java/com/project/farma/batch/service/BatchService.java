@@ -129,4 +129,14 @@ public class BatchService {
         batchRepository.save(batch);
 
     }
+
+
+    public List<BatchResponseDto> getBatchesBySectionId(Long sectionId) {
+        List<Batch> batches = batchRepository.findBySectionId(sectionId);
+        return batches.stream()
+                .map(batchMapper::toBatchResponseDto)
+                .toList();
+    }
+
+
 }

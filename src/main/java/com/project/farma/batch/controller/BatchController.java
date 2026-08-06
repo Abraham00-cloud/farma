@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/batches")
@@ -68,6 +70,28 @@ public class BatchController {
     public ResponseEntity<BatchResponseDto> getBatchDetailsById(@PathVariable Long batchId) {
         BatchResponseDto batch = batchService.getBatchDetailsById(batchId);
         return new ResponseEntity<>(batch, HttpStatus.OK);
+    }
+
+    @GetMapping("/section/{sectionId}")
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(
+            summary = "Fetch All Batches for a Section",
+            description = "Retrieves active and historical production batches assigned to a specific containment section."
+    )
+    public ResponseEntity<List<BatchResponseDto>> getBatchesBySectionId(@PathVariable Long sectionId) {
+        List<BatchResponseDto> batches = batchService.getBatchesBySectionId(sectionId);
+        return new ResponseEntity<>(batches, HttpStatus.OK);
+    }
+
+    @GetMapping("/farm/{farmId}")
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(
+            summary = "Fetch All Batches for a Farm",
+            description = "Retrieves active and historical production batches assigned to sections within a specific farm."
+    )
+    public ResponseEntity<List<BatchResponseDto>> getBatchesByFarmId(@PathVariable Long farmId) {
+        List<BatchResponseDto> batches = batchService.getBatchesBySectionId(farmId);
+        return new ResponseEntity<>(batches, HttpStatus.OK);
     }
 
 }

@@ -41,4 +41,5 @@ public class BatchAnalyticsService {
                 batch, totalFeed, latestWeight, mortalityRate, survivability, fcr, activeAlerts, resolvedAlerts
         );
     }
+
 }

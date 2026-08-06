@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/inventories")
 @RequiredArgsConstructor
@@ -46,6 +48,14 @@ public class InventoryController {
     ) {
         inventoryService.updateStockLevel(inventoryId, adjustmentAmount);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/farm/{farmId}")
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(summary = "Fetch Inventory Stock Items for a Farm Facility")
+    public ResponseEntity<List<InventoryResponseDto>> getInventoriesByFarm(@PathVariable Long farmId) {
+        List<InventoryResponseDto> items = inventoryService.getInventoriesByFarm(farmId);
+        return ResponseEntity.ok(items);
     }
 
 }

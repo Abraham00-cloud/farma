@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<Batch> findBySectionFarmId(Long farmId);
+
+    List<Batch> findBySectionId(Long sectionId);
+
 }
