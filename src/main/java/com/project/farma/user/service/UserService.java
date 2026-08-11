@@ -1,5 +1,6 @@
 package com.project.farma.user.service;
 
+import com.project.farma.common.event.dto.ManagerCreatedEvent;
 import com.project.farma.organisation.model.Organisation;
 import com.project.farma.organisation.repository.OrganisationRepository;
 import com.project.farma.organisation.service.OrganisationService;
@@ -16,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +34,7 @@ public class UserService {
     private final OrganisationRepository organisationRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final ApplicationEventPublisher applicationEventPublisher; // Added event publisher
 
     @Transactional
     public UserResponseDto createUser(UserRequestDto requestDto) {
@@ -52,6 +55,18 @@ public class UserService {
         }
 
         User savedUser = userRepository.save(user);
+
+        // Publish event if created user is a manager, carrying raw password and location details
+        if (savedUser.getRole() == Role.MANAGER) {
+            ManagerCreatedEvent event = new ManagerCreatedEvent(
+                    savedUser.getFirstName(),
+                    savedUser.getEmail(),
+                    requestDto.password(), // Raw password for initial manager notification
+                    organisation.getName()// Assumes your User entity has this property
+            );
+            applicationEventPublisher.publishEvent(event);
+        }
+
         return userMapper.toUserResponseDto(savedUser);
     }
 
@@ -97,6 +112,7 @@ public class UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
+
     public UserResponseDto getUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));

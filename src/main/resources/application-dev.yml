@@ -19,5 +19,5 @@ spring:
 weather:
   api:
     key: 08257101f0d8ad6482052f9256763f90
-    base-url: https://api:openweathermap.org/data/2.5/weather
+    base-url: https://api.openweathermap.org/data/2.5/weather
 

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Portal Access - FARMA</title>
+    <style>
+        body { font-family: sans-serif; background-color: #ECE6D6; margin: 0; padding: 40px; }
+        .card { background-color: #F5F1E6; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid rgba(16,27,20,0.1); }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #101B14; margin-bottom: 20px; }
+        .dot { display: inline-block; width: 10px; height: 10px; background-color: #D9A63E; border-radius: 50%; margin-right: 6px; }
+        .creds { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid rgba(16,27,20,0.1); margin: 20px 0; }
+        .btn { display: inline-block; background-color: #D9A63E; color: #101B14; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
+        p { color: #101B14; font-size: 0.9rem; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo"><span class="dot"></span>Farma</div>
+    <p>Hello <strong th:text="${managerName}">Manager</strong>,</p>
+    <p>You have been successfully provisioned as a Facility Manager for <strong th:text="${orgName}">Organisation</strong>.</p>
+
+    <div class="creds">
+        <p style="margin: 0 0 8px 0;"><strong>Assigned Email:</strong> <span th:text="${email}"></span></p>
+        <p style="margin: 0;"><strong>Temporary Password:</strong> <span th:text="${temporaryPassword}"></span></p>
+    </div>
+
+    <p>You can now log in to your designated workspace using the portal link below:</p>
+    <a th:href="${managerLoginUrl}" class="btn">Access Manager Portal →</a>
+</div>
+</body>
+</html>

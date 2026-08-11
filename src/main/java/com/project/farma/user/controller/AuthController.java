@@ -1,5 +1,6 @@
 package com.project.farma.user.controller;
 
+import com.project.farma.passwordReset.service.PasswordResetService;
 import com.project.farma.user.dto.AuthResponseDto;
 import com.project.farma.user.dto.LoginRequestDto;
 import com.project.farma.user.dto.UserRequestDto;
@@ -16,16 +17,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @Tag(
         name = "1. Authentication Gateway",
-        description = "Public endpoints for user authentication and provisioning access tokens"
+        description = "Public endpoints for user authentication, password recovery, and provisioning access tokens"
 )
-
 public class AuthController {
+
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @Operation(
             summary = "Create a New User",
@@ -47,4 +51,32 @@ public class AuthController {
         return new ResponseEntity<>(authenticatedUser, HttpStatus.OK);
     }
 
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Request Password Reset Instructions",
+            description = "Triggers a secure, time-sensitive password recovery link to the user's email inbox without revealing user existence."
+    )
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        passwordResetService.createPasswordResetTokenForUser(email);
+
+        return ResponseEntity.ok(Map.of("message", "If an account matches this email, reset instructions have been dispatched."));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Execute Password Reset",
+            description = "Validates the active reset token and updates the user's password securely."
+    )
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+
+        boolean success = passwordResetService.resetPassword(token, newPassword);
+        if (!success) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired password reset token."));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Password has been successfully updated. You may now sign in."));
+    }
 }

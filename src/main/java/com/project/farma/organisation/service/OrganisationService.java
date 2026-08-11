@@ -1,5 +1,6 @@
 package com.project.farma.organisation.service;
 
+import com.project.farma.common.event.dto.OrganisationRegisteredEvent;
 import com.project.farma.organisation.dto.OrganisationRequestDto;
 import com.project.farma.organisation.dto.OrganisationResponseDto;
 import com.project.farma.organisation.mapper.OrganisationMapper;
@@ -11,6 +12,7 @@ import com.project.farma.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,6 +24,7 @@ public class OrganisationService {
     private final OrganisationRepository organisationRepository;
 //    private final WalletService walletService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -32,6 +35,14 @@ public class OrganisationService {
 
         createInitialProprietor(organisation, requestDto);
 //        walletService.createWalletForOrganisation(organisation);
+
+        eventPublisher.publishEvent(new OrganisationRegisteredEvent(
+                requestDto.email(),
+                requestDto.adminFirstName(),
+                requestDto.name(),
+                requestDto.registrationNumber(),
+                requestDto.organisationType()
+        ));
 
 
         return organisationMapper.toOrganisationResponseDto(organisation);
