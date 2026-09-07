@@ -3,7 +3,6 @@ package com.project.farma.user.service;
 import com.project.farma.common.event.dto.ManagerCreatedEvent;
 import com.project.farma.organisation.model.Organisation;
 import com.project.farma.organisation.repository.OrganisationRepository;
-import com.project.farma.organisation.service.OrganisationService;
 import com.project.farma.security.JwtService;
 import com.project.farma.user.dto.AuthResponseDto;
 import com.project.farma.user.dto.LoginRequestDto;
@@ -15,16 +14,15 @@ import com.project.farma.user.model.User;
 import com.project.farma.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +32,10 @@ public class UserService {
     private final OrganisationRepository organisationRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final ApplicationEventPublisher applicationEventPublisher; // Added event publisher
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public UserResponseDto createUser(UserRequestDto requestDto) {
+    public UserResponseDto createUser(UserRequestDto requestDto, Long currentPrincipalId) {
         if (userRepository.existsByEmail(requestDto.email())){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
@@ -49,23 +47,14 @@ public class UserService {
         user.setOrganisation(organisation);
 
         if (requestDto.role() == Role.MANAGER) {
-            handleManagerCreation(user, requestDto);
+            handleManagerCreation(user, currentPrincipalId, requestDto.organisationId());
         } else if (requestDto.role() == Role.PROPRIETOR) {
             handleProprietorCreation(user);
         }
 
         User savedUser = userRepository.save(user);
 
-        // Publish event if created user is a manager, carrying raw password and location details
-        if (savedUser.getRole() == Role.MANAGER) {
-            ManagerCreatedEvent event = new ManagerCreatedEvent(
-                    savedUser.getFirstName(),
-                    savedUser.getEmail(),
-                    requestDto.password(), // Raw password for initial manager notification
-                    organisation.getName()// Assumes your User entity has this property
-            );
-            applicationEventPublisher.publishEvent(event);
-        }
+        handlePostCreationEvents(savedUser, requestDto.password());
 
         return userMapper.toUserResponseDto(savedUser);
     }
@@ -79,33 +68,42 @@ public class UserService {
 
         Long organisationId = user.getOrganisation() != null ? user.getOrganisation().getId() : null;
         String token = jwtService.generateToken(loginRequestDto.email(), user.getId(), organisationId);
+
         return new AuthResponseDto(token, user.getEmail(), user.getRole(), organisationId);
     }
 
-    private void handleProprietorCreation(User user) {
-        user.setParent(null);
-    }
+    @Transactional
+    public void deactivateUser(Long userIdToDeactivate, Long currentPrincipalId) {
+        User userToDeactivate = findById(userIdToDeactivate);
+        User currentUser = findById(currentPrincipalId);
 
-    private void handleManagerCreation(User user, UserRequestDto requestDto) {
-        if(requestDto.parentId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A manager must be attached to a Proprietor");
+        handleDeactivationValidation(userToDeactivate, currentUser);
+
+        userToDeactivate.setActive(false);
+        if (userToDeactivate.getManagedFarms() != null) {
+            userToDeactivate.getManagedFarms().forEach(farm -> farm.setManager(null));
         }
 
-        User proprietor = userRepository.findById(requestDto.parentId())
-                .orElseThrow(() -> new EntityNotFoundException("Proprietor not found"));
-
-        if (!proprietor.getOrganisation().getId().equals(user.getOrganisation().getId())){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cross-organisation assignment is not allowed");
-        }
-
-        user.setParent(proprietor);
+        userRepository.save(userToDeactivate);
     }
 
-    public List<UserResponseDto> getUsersByProprietor(Long proprietorID) {
-        return userRepository.findAllByParentId(proprietorID)
-                .stream()
-                .map(userMapper::toUserResponseDto)
-                .toList();
+    public Page<UserResponseDto> getUsersByProprietor(Long proprietorID, Long currentPrincipalId, Pageable pageable) {
+        if (!proprietorID.equals(currentPrincipalId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot view managers belonging to another Proprietor.");
+        }
+
+        return userRepository.findAllByParentId(proprietorID, pageable)
+                .map(userMapper::toUserResponseDto);
+    }
+
+    public UserResponseDto getUserById(Long requestedUserId, Long currentPrincipalOrgId) {
+        User user = findById(requestedUserId);
+
+        if (!user.getOrganisation().getId().equals(currentPrincipalOrgId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: User belongs to a different organisation.");
+        }
+
+        return userMapper.toUserResponseDto(user);
     }
 
     public User findById(Long userId) {
@@ -113,9 +111,46 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
-    public UserResponseDto getUserById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return userMapper.toUserResponseDto(user);
+    // PRIVATE HELPER METHODS
+
+    private void handleProprietorCreation(User user) {
+        user.setParent(null);
+    }
+
+    private void handleManagerCreation(User user, Long currentPrincipalId, Long orgId) {
+        if (currentPrincipalId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You must be logged in to create a manager.");
+        }
+
+        User proprietor = findById(currentPrincipalId);
+
+        if (!proprietor.getOrganisation().getId().equals(orgId)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot assign managers to an organisation you do not own.");
+        }
+
+        user.setParent(proprietor);
+    }
+
+    private void handlePostCreationEvents(User savedUser, String rawPassword) {
+        if (savedUser.getRole() == Role.MANAGER) {
+            ManagerCreatedEvent event = new ManagerCreatedEvent(
+                    savedUser.getFirstName(),
+                    savedUser.getEmail(),
+                    rawPassword,
+                    savedUser.getOrganisation().getName()
+            );
+            applicationEventPublisher.publishEvent(event);
+        }
+    }
+
+    private void handleDeactivationValidation(User userToDeactivate, User currentUser) {
+        if (userToDeactivate.getRole() == Role.PROPRIETOR) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Proprietors cannot delete their account without first transferring ownership.");
+        }
+
+        if (!userToDeactivate.getOrganisation().getId().equals(currentUser.getOrganisation().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot deactivate users outside your organisation.");
+        }
     }
 }

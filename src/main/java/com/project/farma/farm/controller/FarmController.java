@@ -11,6 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,8 +49,13 @@ public class FarmController {
             summary = "Get All Farms in an Organisation",
             description = "Compiles a complete list of all operational farm installations assigned under a specific corporate multi-tenant ID."
     )
-    public ResponseEntity<List<FarmResponseDto>> getFarmsByOrganisation(@PathVariable Long organisationId) {
-        List<FarmResponseDto> farms = farmService.getFarmsByOrganisation(organisationId);
+    public ResponseEntity<Page<FarmResponseDto>> getFarmsByOrganisation(
+            @PathVariable Long organisationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+        ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<FarmResponseDto> farms = farmService.getFarmsByOrganisation(organisationId, pageable);
         return new ResponseEntity<>(farms, HttpStatus.OK);
     }
 

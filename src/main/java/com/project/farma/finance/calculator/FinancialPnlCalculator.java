@@ -22,8 +22,16 @@ public class FinancialPnlCalculator {
     public double calculateTotalExpenses(List<Transaction> transactions) {
         return transactions.stream()
                 .filter(t -> t.getType() == TransactionType.DEBIT)
+                .filter(this::isPnlExpense)
                 .mapToDouble(Transaction::getAmount)
                 .sum();
+    }
+
+    private boolean isPnlExpense(Transaction t) {
+        return switch (t.getCategory()) {
+            case FEED_PURCHASE, MEDICINE_PURCHASE, VACCINE_PURCHASE, EQUIPMENT_PURCHASE -> false;
+            default -> true;
+        };
     }
 
     public double calculateNetProfit(double revenue, double expenses) {
@@ -45,6 +53,7 @@ public class FinancialPnlCalculator {
 
         Map<String, Double> expensesByCategory = transactions.stream()
                 .filter(t -> t.getType() == TransactionType.DEBIT)
+                .filter(this::isPnlExpense)
                 .collect(Collectors.groupingBy(
                         t -> t.getCategory().name(),
                         Collectors.summingDouble(Transaction::getAmount)

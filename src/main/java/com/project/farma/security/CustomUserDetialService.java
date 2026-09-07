@@ -2,9 +2,9 @@ package com.project.farma.security;
 
 import com.project.farma.user.model.User;
 import com.project.farma.user.repository.UserRepository;
-import com.project.farma.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,8 +23,11 @@ public class CustomUserDetialService implements UserDetailsService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email:" + username ));
 
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+        if (!user.isActive()) {
+            throw new DisabledException("This account has been deactivated or deleted.");
+        }
 
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
 
         return FarmUserPrincipal.builder()
                 .id(user.getId())
@@ -34,7 +37,4 @@ public class CustomUserDetialService implements UserDetailsService {
                 .authorities(Collections.singletonList(authority))
                 .build();
     }
-
-
-
 }

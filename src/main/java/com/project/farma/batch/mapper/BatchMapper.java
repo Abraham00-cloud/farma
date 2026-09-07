@@ -27,6 +27,7 @@ public class BatchMapper {
                 batch.getId(),
                 batch.getBatchNumber(),
                 batch.getSection().getName(),
+                batch.getBreed(),
                 batch.getInitialCount(),
                 batch.getCurrentCount(),
                 batch.getMortalityCount(),
@@ -37,8 +38,6 @@ public class BatchMapper {
                 batch.getExpectedEndDate(),
                 batch.getActualEndDate(),
                 batch.getCreatedAt()
-
-
         );
     }
 }

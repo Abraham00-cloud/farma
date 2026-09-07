@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrganisationRepository extends JpaRepository<Organisation, Long> {
-    boolean existsByEmail(@NotBlank(message = "Email is already in use")String email);
+    boolean existsByEmail(String email);
 
-    boolean existsByRegistrationNumber(@NotBlank(message = "Registration is already in use") String registrationNumber);
+    boolean existsByRegistrationNumber(String registrationNumber);
 }

@@ -34,7 +34,8 @@ public record TransactionRequestDto(
         @NotNull(message = "Organisation ID is required")
         Long organisationId,
 
-        @NotNull(message = "BatchId is required")
+        Long farmId,
+
         Long batchId
 ) {
 }

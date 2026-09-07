@@ -27,8 +27,6 @@ public class Organisation {
     @Enumerated(EnumType.STRING)
     private OrganisationType organisationType;
 
-//    @OneToOne(mappedBy = "organisation", cascade = CascadeType.ALL)
-//    private Wallet wallet;
 
     @OneToMany(mappedBy = "organisation", cascade = CascadeType.ALL)
     private List<User> members;

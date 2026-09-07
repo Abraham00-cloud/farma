@@ -5,12 +5,28 @@ spring:
     password: pinpasser123
     driver-class-name: org.postgresql.Driver
 
+  mail:
+    host: smtp.resend.com
+    port: 587
+    username: resend
+    password: ${RESEND_API_KEY}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: none
+    properties:
+      jakarta:
+        persistence:
+          schema-generation:
+            scripts:
+              action: create
+              create-target: src/main/resources/db/migration/V1__init_farma_schema.sql
 #    properties:
 #      hibernate:
 #        tenant_identifier_resolver: com.project.farma.config.tenant.TenantIdentifierResolver
@@ -20,4 +36,6 @@ weather:
   api:
     key: 08257101f0d8ad6482052f9256763f90
     base-url: https://api.openweathermap.org/data/2.5/weather
-
+jwt:
+  secret: ${JWT_SECRET:3c9a6f8b5d2e7c4a1b0d9f8e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b}
+  expiration: ${JWT_EXPIRATION:86400000}

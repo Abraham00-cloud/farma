@@ -9,13 +9,12 @@ import com.project.farma.section.model.Section;
 import com.project.farma.section.repository.SectionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +26,8 @@ public class SectionService {
     @Transactional
     public SectionResponseDto createSection(SectionRequestDto requestDto) {
         Farm farm = farmService.getFarmById(requestDto.farmId());
-        handleSectionValidation(requestDto);
+
+        checkSectionUniquenessAndCapacity(requestDto);
 
         Section section = sectionMapper.toSectionEntity(requestDto);
         section.setAvailable(true);
@@ -38,60 +38,67 @@ public class SectionService {
     }
 
     @Transactional
-    public void setSectionStatus(Long sectionId, boolean status) {
-        Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
-
-        section.setAvailable(status);
-        sectionRepository.save(section);
-    }
-
-    public List<SectionResponseDto> getSectionsByFarm(Long farmId) {
-        return sectionRepository.findAllByFarmId(farmId)
-                .stream()
-                .map(sectionMapper::toSectionResponseDto)
-                .toList();
-    }
-
-    public List<SectionResponseDto> getAvailableSectionsByFarm(Long farmId) {
-        return sectionRepository.findAllByFarmIdAndIsAvailableTrue(farmId)
-                .stream()
-                .map(sectionMapper::toSectionResponseDto)
-                .toList();
-    }
-
-    public Section getSectionEntityById(Long sectionId) {
-        return sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
-    }
-
-    public SectionResponseDto getSectionDetailsById(Long sectionId) {
-        Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
-        return sectionMapper.toSectionResponseDto(section);
-    }
-
-    @Transactional
     public SectionResponseDto updateSection(Long sectionId, SectionRequestDto requestDto) {
         Section section = getSectionEntityById(sectionId);
-        if (!section.getName().equals(requestDto.name()) &&
-                sectionRepository.existsByNameAndFarmId(requestDto.name(), requestDto.farmId())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Name already esists on this farm");
-        }
+
+        checkUpdateUniqueness(section, requestDto);
 
         section.setName(requestDto.name());
         section.setAnimalCategory(requestDto.animalCategory());
         section.setProductionType(requestDto.productionType());
         section.setCapacity(requestDto.capacity());
 
-        return sectionMapper.toSectionResponseDto(sectionRepository.save(section));
+        Section updatedSection = sectionRepository.save(section);
+        return sectionMapper.toSectionResponseDto(updatedSection);
     }
 
-    private void handleSectionValidation(SectionRequestDto requestDto) {
+    @Transactional
+    public void setSectionStatus(Long sectionId, boolean status) {
+        Section section = getSectionEntityById(sectionId);
+        section.setAvailable(status);
+        sectionRepository.save(section);
+    }
+
+    public Page<SectionResponseDto> getSectionsByFarm(Long farmId, Pageable pageable) {
+        return sectionRepository.findAllByFarmId(farmId, pageable)
+                .map(sectionMapper::toSectionResponseDto);
+    }
+
+    public Page<SectionResponseDto> getAvailableSectionsByFarm(Long farmId, Pageable pageable) {
+        return sectionRepository.findAllByFarmIdAndIsAvailableTrue(farmId, pageable)
+                .map(sectionMapper::toSectionResponseDto);
+    }
+
+    public SectionResponseDto getSectionDetailsById(Long sectionId) {
+        Section section = getSectionEntityById(sectionId);
+        return sectionMapper.toSectionResponseDto(section);
+    }
+
+
+    // INTERNAL METHODS
+
+    public Section getSectionEntityById(Long sectionId) {
+        return sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new EntityNotFoundException("Section not found"));
+    }
+
+    // PRIVATE HELPER METHODS
+    private void checkSectionUniquenessAndCapacity(SectionRequestDto requestDto) {
         if (sectionRepository.existsByNameAndFarmId(requestDto.name(), requestDto.farmId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A section with this name already exists on this farm");
         }
-        if (requestDto.capacity()<= 0) {
+        if (requestDto.capacity() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section Capacity must be greater than zero");
+        }
+    }
+
+    private void checkUpdateUniqueness(Section currentSection, SectionRequestDto requestDto) {
+        if (!currentSection.getName().equals(requestDto.name()) &&
+                sectionRepository.existsByNameAndFarmId(requestDto.name(), requestDto.farmId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A section with this name already exists on this farm");
+        }
+
+        if (requestDto.capacity() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section Capacity must be greater than zero");
         }
     }

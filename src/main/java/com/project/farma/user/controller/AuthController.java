@@ -1,6 +1,7 @@
 package com.project.farma.user.controller;
 
 import com.project.farma.passwordReset.service.PasswordResetService;
+import com.project.farma.security.FarmUserPrincipal;
 import com.project.farma.user.dto.AuthResponseDto;
 import com.project.farma.user.dto.LoginRequestDto;
 import com.project.farma.user.dto.UserRequestDto;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +39,14 @@ public class AuthController {
     )
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
-        UserResponseDto createdUser = userService.createUser(userRequestDto);
+        Long currentUserId = null;
+
+        if (SecurityContextHolder.getContext().getAuthentication() != null &&
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof FarmUserPrincipal) {
+            currentUserId = ((FarmUserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        }
+
+        UserResponseDto createdUser = userService.createUser(userRequestDto, currentUserId);
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 

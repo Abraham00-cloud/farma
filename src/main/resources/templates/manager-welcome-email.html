@@ -2,30 +2,77 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manager Portal Access - FARMA</title>
-    <style>
-        body { font-family: sans-serif; background-color: #ECE6D6; margin: 0; padding: 40px; }
-        .card { background-color: #F5F1E6; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid rgba(16,27,20,0.1); }
-        .logo { font-size: 1.5rem; font-weight: bold; color: #101B14; margin-bottom: 20px; }
-        .dot { display: inline-block; width: 10px; height: 10px; background-color: #D9A63E; border-radius: 50%; margin-right: 6px; }
-        .creds { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid rgba(16,27,20,0.1); margin: 20px 0; }
-        .btn { display: inline-block; background-color: #D9A63E; color: #101B14; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-        p { color: #101B14; font-size: 0.9rem; line-height: 1.5; }
-    </style>
 </head>
-<body>
-<div class="card">
-    <div class="logo"><span class="dot"></span>Farma</div>
-    <p>Hello <strong th:text="${managerName}">Manager</strong>,</p>
-    <p>You have been successfully provisioned as a Facility Manager for <strong th:text="${orgName}">Organisation</strong>.</p>
+<body style="font-family: Arial, Helvetica, sans-serif; background-color: #ECE6D6; padding: 15px; color: #161F17; margin: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+<div style="max-width: 500px; margin: 0 auto; background-color: #F5F1E6; padding: 25px 20px; border-radius: 6px; border: 1px solid rgba(16, 27, 20, 0.15); box-sizing: border-box;">
 
-    <div class="creds">
-        <p style="margin: 0 0 8px 0;"><strong>Assigned Email:</strong> <span th:text="${email}"></span></p>
-        <p style="margin: 0;"><strong>Temporary Password:</strong> <span th:text="${temporaryPassword}"></span></p>
+    <!-- Minimalist Brand Header -->
+    <table role="presentation" style="width: 100%; border-bottom: 2px solid #101B14; padding-bottom: 15px; margin-bottom: 20px; border-collapse: collapse;">
+        <tr>
+            <td style="width: 48px; vertical-align: middle;">
+                <div style="background-color: #101B14; color: #D9A63E; width: 40px; height: 40px; border-radius: 8px; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px;">
+                    F
+                </div>
+            </td>
+            <td style="vertical-align: middle;">
+                <h1 style="color: #101B14; font-size: 20px; margin: 0; letter-spacing: -0.5px; font-weight: 900; line-height: 1.2;">FARMA</h1>
+                <p style="color: #3F6B47; font-size: 10px; margin: 2px 0 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Facility Manager Provisioning</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Greeting & Body -->
+    <h2 style="color: #101B14; font-size: 18px; margin: 0 0 12px 0; font-weight: 800;">
+        Hello <span th:text="${managerName}">Manager</span>,
+    </h2>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #161F17; margin: 0 0 20px 0;">
+        You have been successfully provisioned as a Facility Manager for <strong th:text="${orgName}">Organisation</strong>. Below are your official access credentials:
+    </p>
+
+    <!-- Credentials Card -->
+    <div style="background-color: #ECE6D6; border: 1px solid rgba(16, 27, 20, 0.15); border-radius: 4px; padding: 15px; margin-bottom: 20px; box-sizing: border-box;">
+        <p style="font-size: 11px; font-family: monospace; font-weight: bold; text-transform: uppercase; color: #3F6B47; margin: 0 0 10px 0; letter-spacing: 0.5px;">
+            &#9679; Assigned Credentials
+        </p>
+        <table role="presentation" style="width: 100%; font-size: 13px; border-collapse: collapse; table-layout: fixed;">
+            <tr>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; width: 42%; vertical-align: top;">Assigned Email:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; font-family: monospace; width: 58%; vertical-align: top; word-break: break-all;" th:text="${email}">manager@domain.com</td>
+            </tr>
+            <tr>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; vertical-align: top;">Temporary Password:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; font-family: monospace; vertical-align: top; word-break: break-all;" th:text="${temporaryPassword}">TempPass123!</td>
+            </tr>
+        </table>
     </div>
 
-    <p>You can now log in to your designated workspace using the portal link below:</p>
-    <a th:href="${managerLoginUrl}" class="btn">Access Manager Portal →</a>
+    <!-- Operational Status Box & Action Button -->
+    <div style="margin: 20px 0; padding: 15px; background-color: #ECE6D6; border-left: 4px solid #3F6B47; border-radius: 2px; box-sizing: border-box;">
+        <p style="font-size: 13px; margin: 0 0 15px 0; color: #161F17; font-weight: 500; line-height: 1.4;">
+            You can now log in to your designated facility workspace using the portal link below:
+        </p>
+
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+            <tr>
+                <td align="center" style="border-radius: 4px; background-color: #D9A63E;">
+                    <a href="https://www.farma.com.ng/auth/manager" th:href="${managerLoginUrl}" target="_blank" style="font-size: 12px; font-family: Arial, sans-serif; color: #101B14; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; padding: 12px 20px; border-radius: 4px; border: 1px solid #D9A63E; display: inline-block;">
+                        Access Manager Portal &rarr;
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p style="font-size: 11px; color: #667568; margin-top: 20px; line-height: 1.4;">
+        Please log in and update your temporary password immediately under your account security settings.
+    </p>
+
+    <p style="font-size: 11px; color: #8FA091; margin-top: 25px; border-top: 1px solid rgba(16, 27, 20, 0.1); padding-top: 15px; font-family: monospace;">
+        FARMA Enterprise Management Suite &bull; Automated System Dispatch
+    </p>
 </div>
 </body>
 </html>

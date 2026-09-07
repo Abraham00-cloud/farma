@@ -10,14 +10,14 @@ import java.time.LocalDateTime;
 
 @Component
 public class TransactionMapper {
-    public Transaction toTransactionEntity(TransactionRequestDto transactionRequestDto) {
+    public Transaction toTransactionEntity(TransactionRequestDto dto) {
         return Transaction.builder()
-                .amount(transactionRequestDto.amount())
-                .type(transactionRequestDto.transactionType())
-                .category(transactionRequestDto.transactionCategory())
-                .transactionDate(transactionRequestDto.transactionDate())
-                .description(transactionRequestDto.description())
-                .isCashFlow(determineIfCashFlow(transactionRequestDto.transactionCategory()))
+                .amount(dto.amount())
+                .type(dto.transactionType())
+                .category(dto.transactionCategory())
+                .transactionDate(dto.transactionDate())
+                .description(dto.description())
+                .isCashFlow(determineIfCashFlow(dto.transactionCategory()))
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -31,8 +31,10 @@ public class TransactionMapper {
                 transaction.getTransactionDate(),
                 transaction.getDescription(),
                 transaction.isCashFlow(),
-                transaction.getBatch() != null ? transaction.getId() : null,
+                transaction.getBatch() != null ? transaction.getBatch().getId() : null,
                 transaction.getBatch() != null ? transaction.getBatch().getBatchNumber() : null,
+                transaction.getFarm() != null ? transaction.getFarm().getId() : null,
+                transaction.getFarm() != null ? transaction.getFarm().getName() : null,
                 transaction.getCreatedAt()
         );
     }

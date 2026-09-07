@@ -39,13 +39,13 @@ public class DailyLog {
 
     private String administrationMethod;
 
-
     private Integer mortalityCount;
     private Double averageWeight;
 
     private Integer eggsCollected;
 
     private String observations;
+
     @ManyToOne
     @JoinColumn(name = "recorded_by_id", nullable = false)
     private User recordedBy;
@@ -61,7 +61,11 @@ public class DailyLog {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @Builder.Default
+    @Column(name = "historical_feed_cost")
+    private Double historicalFeedCost = 0.0;
 
-
-
+    @Builder.Default
+    @Column(name = "historical_medicine_cost")
+    private Double historicalMedicineCost = 0.0;
 }

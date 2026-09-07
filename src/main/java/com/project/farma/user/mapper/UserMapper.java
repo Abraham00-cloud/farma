@@ -1,13 +1,11 @@
 package com.project.farma.user.mapper;
 
-
 import com.project.farma.user.dto.UserRequestDto;
 import com.project.farma.user.dto.UserResponseDto;
 import com.project.farma.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +32,8 @@ public class UserMapper {
                 user.getRole(),
                 user.getOrganisation() != null ? user.getOrganisation().getId() : null,
                 user.getParent() != null ? user.getParent().getId() : null,
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.isActive()
         );
     }
 }

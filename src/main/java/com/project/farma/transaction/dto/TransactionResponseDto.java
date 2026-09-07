@@ -16,9 +16,7 @@ public record TransactionResponseDto(
         boolean isCashFlow,
         Long batchId,
         String batchNumber,
+        Long farmId,
+        String farmName,
         LocalDateTime createdAt
-
-) {
-
-
-}
+) {}

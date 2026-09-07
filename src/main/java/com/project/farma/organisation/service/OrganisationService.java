@@ -22,31 +22,43 @@ import org.springframework.web.server.ResponseStatusException;
 public class OrganisationService {
     private final OrganisationMapper organisationMapper;
     private final OrganisationRepository organisationRepository;
-//    private final WalletService walletService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
 
-
     @Transactional
     public OrganisationResponseDto createOrganisation(OrganisationRequestDto requestDto) {
-        validateOrganisationUniqueness(requestDto);
+        checkOrganisationUniqueness(requestDto);
 
         Organisation organisation = organisationRepository.save(organisationMapper.toOrganisation(requestDto));
 
         createInitialProprietor(organisation, requestDto);
-//        walletService.createWalletForOrganisation(organisation);
-
-        eventPublisher.publishEvent(new OrganisationRegisteredEvent(
-                requestDto.email(),
-                requestDto.adminFirstName(),
-                requestDto.name(),
-                requestDto.registrationNumber(),
-                requestDto.organisationType()
-        ));
-
+        sendOrganisationRegisteredEvent(requestDto, organisation.getName());
 
         return organisationMapper.toOrganisationResponseDto(organisation);
+    }
 
+    public OrganisationResponseDto getOrganisationDetails(Long organisationId) {
+        return organisationRepository.findById(organisationId)
+                .map(organisationMapper::toOrganisationResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+    }
+
+    public Organisation findById(Long id) {
+        return organisationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+    }
+
+    // PRIVATE HELPER METHODS
+
+
+    private void checkOrganisationUniqueness(OrganisationRequestDto requestDto) {
+        if (organisationRepository.existsByRegistrationNumber(requestDto.registrationNumber())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The registration number is already in use");
+        }
+
+        if (organisationRepository.existsByEmail(requestDto.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+        }
     }
 
     private void createInitialProprietor(Organisation organisation, OrganisationRequestDto requestDto) {
@@ -59,28 +71,17 @@ public class OrganisationService {
                 organisation.getId(),
                 null
         );
-        userService.createUser(proprietorRequest);
 
+        userService.createUser(proprietorRequest, null);
     }
 
-    private void validateOrganisationUniqueness(OrganisationRequestDto requestDto) {
-        if (organisationRepository.existsByRegistrationNumber(requestDto.registrationNumber())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "The registration number is already in use");
-        }
-
-        if (organisationRepository.existsByEmail(requestDto.email())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Email is already in use");
-        }
-    }
-
-    public OrganisationResponseDto getOrganisationDetails(Long organisationId) {
-        return organisationRepository.findById(organisationId)
-                .map(organisationMapper::toOrganisationResponseDto)
-                .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
-    }
-
-    public Organisation findById(Long id) {
-        return organisationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Organisation not found"));
+    private void sendOrganisationRegisteredEvent(OrganisationRequestDto requestDto, String orgName) {
+        eventPublisher.publishEvent(new OrganisationRegisteredEvent(
+                requestDto.email(),
+                requestDto.adminFirstName(),
+                orgName,
+                requestDto.registrationNumber(),
+                requestDto.organisationType()
+        ));
     }
 }

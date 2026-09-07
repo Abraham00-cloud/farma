@@ -12,6 +12,7 @@ public record UserResponseDto(
         Role role,
         Long organisationId,
         Long parentId,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean isActive
 ) {
 }

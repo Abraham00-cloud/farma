@@ -22,7 +22,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN); // Explicit 403
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());

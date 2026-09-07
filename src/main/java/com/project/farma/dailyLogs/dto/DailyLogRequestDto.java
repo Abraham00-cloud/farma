@@ -24,7 +24,7 @@ public record DailyLogRequestDto (
         @Size(max = 100, message = "Administration method description is too long")
         String administrationMethod,
 
-        @NotNull(message = "Mortality count is required") // Default to 0 in UI, but must be present
+        @NotNull(message = "Mortality count is required")
         @Min(value = 0, message = "Mortality count cannot be negative")
         Integer mortalityCount,
 

@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests( auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Crucial: Allow browser preflight probes
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/v1/organisations/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/error").permitAll()
@@ -77,7 +77,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Explicit origins required when allowCredentials is true
         configuration.setAllowedOrigins(List.of(
                 "https://farma.com.ng",
                 "https://www.farma.com.ng",

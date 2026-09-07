@@ -2,6 +2,7 @@ package com.project.farma.common.event.service;
 
 import com.project.farma.common.event.dto.ManagerCreatedEvent;
 import com.project.farma.common.event.dto.OrganisationRegisteredEvent;
+import com.project.farma.common.event.dto.PasswordResetEvent;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +17,14 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 @Component
 @RequiredArgsConstructor
 public class EmailService {
+
+    private static final String FROM_NO_REPLY = "FARMA <noreply@farma.com.ng>";
+    private static final String FROM_SUPPORT = "FARMA Support <support@farma.com.ng>";
+
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    @Value("${app.frontend.url:https://www.farma.com.ng}") // Fallback to production domain if not specified
+    @Value("${app.frontend.url:https://www.farma.com.ng}")
     private String frontendUrl;
 
     @Async
@@ -33,14 +38,14 @@ public class EmailService {
             context.setVariable("orgType", event.organisationType().name());
             context.setVariable("email", event.email());
 
-            // Updated to use production domain
             context.setVariable("loginUrl", frontendUrl + "/auth/proprietor");
 
             String htmlContent = templateEngine.process("welcome-email", context);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("onboarding@resend.dev");
+
+            helper.setFrom(FROM_NO_REPLY);
             helper.setTo(event.email());
             helper.setSubject("Welcome to FARMA - Organisation Provisioned Successfully");
             helper.setText(htmlContent, true);
@@ -52,18 +57,18 @@ public class EmailService {
     }
 
     @Async
-    public void sendPasswordResetEmail(String recipientEmail, String resetUrl) {
+    public void sendPasswordResetEmail(String email, String resetUrl) {
         try {
             Context context = new Context();
-            // Note: If resetUrl is passed directly from the caller, ensure it uses frontendUrl too!
             context.setVariable("resetUrl", resetUrl);
 
-            String htmlContent = templateEngine.process("password-reset-email", context);
+            String htmlContent = templateEngine.process("password-recovery", context);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("support@resend.dev");
-            helper.setTo(recipientEmail);
+
+            helper.setFrom(FROM_SUPPORT);
+            helper.setTo(email);
             helper.setSubject("FARMA - Password Recovery Request");
             helper.setText(htmlContent, true);
 
@@ -83,14 +88,14 @@ public class EmailService {
             context.setVariable("email", event.email());
             context.setVariable("temporaryPassword", event.temporaryPassword());
 
-            // Updated to use production domain link pointing directly to manager portal login
             context.setVariable("managerLoginUrl", frontendUrl + "/auth/manager");
 
             String htmlContent = templateEngine.process("manager-welcome-email", context);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("onboarding@resend.dev");
+
+            helper.setFrom(FROM_NO_REPLY);
             helper.setTo(event.email());
             helper.setSubject("FARMA - Assigned Facility Manager Access & Credentials");
             helper.setText(htmlContent, true);

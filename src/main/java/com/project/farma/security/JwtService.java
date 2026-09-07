@@ -3,10 +3,12 @@ package com.project.farma.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,11 +16,16 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Component
-public class JwtService{
-    private static final String SECRET_KEY = "3c9a6f8b5d2e7c4a1b0d9f8e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b";
+public class JwtService {
+
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.expiration:86400000}")
+    private long jwtExpiration;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String email, Long userId, Long organisationId) {
@@ -30,7 +37,7 @@ public class JwtService{
                 .claims(extraClaims)
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -49,12 +56,10 @@ public class JwtService{
     }
 
     public String extractEmail(String token) {
-//        return getAllClaims(token).getSubject();  this works well without the functional interface get claim method
         return getClaim(token, Claims::getSubject);
     }
 
     public Long extractOrganisationId(String token) {
-//        return getAllClaims(token).get("organisationId", Long.class);
         return getClaim(token, claims -> claims.get("organisationId", Long.class));
     }
 
@@ -70,6 +75,4 @@ public class JwtService{
     private boolean isTokenExpired(String token) {
         return getClaim(token, Claims::getExpiration).before(new Date());
     }
-
-
 }

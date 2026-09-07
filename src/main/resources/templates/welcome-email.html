@@ -2,75 +2,82 @@
 <html xmlns:th="http://www.thymeleaf.com">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to FARMA</title>
 </head>
-<body style="font-family: sans-serif; background-color: #ECE6D6; padding: 30px; color: #161F17; margin: 0;">
-<div style="max-width: 600px; margin: 0 auto; background-color: #F5F1E6; padding: 40px; border-radius: 4px; border: 1px solid rgba(16, 27, 20, 0.15); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+<body style="font-family: Arial, Helvetica, sans-serif; background-color: #ECE6D6; padding: 15px; color: #161F17; margin: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+<div style="max-width: 600px; margin: 0 auto; background-color: #F5F1E6; padding: 25px 20px; border-radius: 6px; border: 1px solid rgba(16, 27, 20, 0.15); box-sizing: border-box;">
 
-    <!-- Minimalist Brand Header -->
-    <div style="border-bottom: 2px solid #101B14; padding-bottom: 20px; margin-bottom: 25px;">
-        <div style="background-color: #101B14; color: #D9A63E; width: 40px; height: 40px; border-radius: 8px; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px; margin-right: 12px; display: inline-block;">
-            F
-        </div>
-        <div style="display: inline-block; vertical-align: middle;">
-            <h1 style="color: #101B14; font-size: 20px; margin: 0; letter-spacing: -0.5px; font-weight: 900;">FARMA</h1>
-            <p style="color: #3F6B47; font-size: 10px; margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Executive Control Suite</p>
-        </div>
-    </div>
+    <table role="presentation" style="width: 100%; border-bottom: 2px solid #101B14; padding-bottom: 15px; margin-bottom: 20px; border-collapse: collapse;">
+        <tr>
+            <td style="width: 48px; vertical-align: middle;">
+                <div style="background-color: #101B14; color: #D9A63E; width: 40px; height: 40px; border-radius: 8px; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px;">
+                    F
+                </div>
+            </td>
+            <td style="vertical-align: middle;">
+                <h1 style="color: #101B14; font-size: 20px; margin: 0; letter-spacing: -0.5px; font-weight: 900; line-height: 1.2;">FARMA</h1>
+                <p style="color: #3F6B47; font-size: 10px; margin: 2px 0 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Executive Control Suite</p>
+            </td>
+        </tr>
+    </table>
 
-    <!-- Greeting & Body -->
-    <h2 style="color: #101B14; font-size: 22px; margin-bottom: 15px; font-weight: 800;">
+    <h2 style="color: #101B14; font-size: 20px; margin: 0 0 12px 0; font-weight: 800;">
         Welcome aboard, <span th:text="${name}">Proprietor</span>!
     </h2>
 
-    <p style="font-size: 14px; line-height: 1.6; color: #161F17; margin-bottom: 20px;">
+    <p style="font-size: 14px; line-height: 1.5; color: #161F17; margin: 0 0 20px 0;">
         Your corporate agricultural entity has been successfully provisioned and secured on the FARMA multi-tenant network. Below is your official entity provisioning summary:
     </p>
 
-    <!-- Executive Metadata Card -->
-    <div style="background-color: #ECE6D6; border: 1px solid rgba(16, 27, 20, 0.15); border-radius: 4px; padding: 20px; margin-bottom: 25px;">
-        <p style="font-size: 11px; font-family: monospace; font-weight: bold; text-transform: uppercase; color: #3F6B47; margin: 0 0 12px 0; letter-spacing: 0.5px;">
+    <div style="background-color: #ECE6D6; border: 1px solid rgba(16, 27, 20, 0.15); border-radius: 4px; padding: 15px; margin-bottom: 20px; box-sizing: border-box;">
+        <p style="font-size: 11px; font-family: monospace; font-weight: bold; text-transform: uppercase; color: #3F6B47; margin: 0 0 10px 0; letter-spacing: 0.5px;">
             &#9679; Entity Telemetry &amp; Profile Summary
         </p>
-        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+        <table role="presentation" style="width: 100%; font-size: 13px; border-collapse: collapse; table-layout: fixed;">
             <tr>
-                <td style="padding: 6px 0; color: #101B14; font-weight: bold; width: 40%;">Organisation Name:</td>
-                <td style="padding: 6px 0; color: #161F17;" th:text="${orgName}">Digicore Agro Ltd</td>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; width: 42%; vertical-align: top;">Organisation Name:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; width: 58%; vertical-align: top; word-break: break-word;" th:text="${orgName}">Digicore Agro Ltd</td>
             </tr>
             <tr>
-                <td style="padding: 6px 0; color: #101B14; font-weight: bold;">Registration Number:</td>
-                <td style="padding: 6px 0; color: #161F17; font-family: monospace;" th:text="${regNumber}">RC-2026-908</td>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; vertical-align: top;">Registration Number:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; font-family: monospace; vertical-align: top; word-break: break-all;" th:text="${regNumber}">RC-2026-908</td>
             </tr>
             <tr>
-                <td style="padding: 6px 0; color: #101B14; font-weight: bold;">Entity Type:</td>
-                <td style="padding: 6px 0; color: #161F17;" th:text="${orgType}">PRIVATE</td>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; vertical-align: top;">Entity Type:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; vertical-align: top; word-break: break-word;" th:text="${orgType}">PRIVATE</td>
             </tr>
             <tr>
-                <td style="padding: 6px 0; color: #101B14; font-weight: bold;">Administrator Role:</td>
-                <td style="padding: 6px 0; color: #3F6B47; font-weight: bold;">PROPRIETOR (ROOT)</td>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; vertical-align: top;">Administrator Role:</td>
+                <td style="padding: 5px 0 5px 8px; color: #3F6B47; font-weight: bold; vertical-align: top; word-break: break-word;">PROPRIETOR (ROOT)</td>
             </tr>
             <tr>
-                <td style="padding: 6px 0; color: #101B14; font-weight: bold;">Registered Email:</td>
-                <td style="padding: 6px 0; color: #161F17; font-family: monospace;" th:text="${email}">proprietor@domain.com</td>
+                <td style="padding: 5px 0; color: #101B14; font-weight: bold; vertical-align: top;">Registered Email:</td>
+                <td style="padding: 5px 0 5px 8px; color: #161F17; font-family: monospace; vertical-align: top; word-break: break-all;" th:text="${email}">proprietor@domain.com</td>
             </tr>
         </table>
     </div>
 
-    <!-- Operational Status Box & Action Button -->
-    <div style="margin: 25px 0; padding: 20px; background-color: #ECE6D6; border-left: 4px solid #3F6B47; border-radius: 2px;">
+    <div style="margin: 20px 0; padding: 15px; background-color: #ECE6D6; border-left: 4px solid #3F6B47; border-radius: 2px; box-sizing: border-box;">
         <p style="font-size: 11px; margin: 0; font-family: monospace; font-weight: bold; color: #3F6B47; text-transform: uppercase; letter-spacing: 0.5px;">
             System Status: 100% Operational
         </p>
-        <p style="font-size: 13px; margin: 6px 0 15px 0; color: #161F17; font-weight: 500;">
+        <p style="font-size: 13px; margin: 6px 0 15px 0; color: #161F17; font-weight: 500; line-height: 1.4;">
             Your workspace is ready. Click below to access the proprietor portal and sign in with your credentials:
         </p>
-        <a th:href="${loginUrl}" target="_blank" style="background-color: #D9A63E; color: #101B14; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            Access Executive Portal &rarr;
-        </a>
+
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+            <tr>
+                <td align="center" style="border-radius: 4px; background-color: #D9A63E;">
+                    <a href="https://www.farma.com.ng/auth/proprietor" th:href="${loginUrl}" target="_blank" style="font-size: 12px; font-family: Arial, sans-serif; color: #101B14; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; padding: 12px 20px; border-radius: 4px; border: 1px solid #D9A63E; display: inline-block;">
+                        Access Executive Portal &rarr;
+                    </a>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <!-- Footer -->
-    <p style="font-size: 11px; color: #8FA091; margin-top: 35px; border-top: 1px solid rgba(16, 27, 20, 0.1); padding-top: 20px; font-family: monospace;">
+    <p style="font-size: 11px; color: #8FA091; margin-top: 25px; border-top: 1px solid rgba(16, 27, 20, 0.1); padding-top: 15px; font-family: monospace;">
         FARMA Enterprise Management Suite &bull; Automated System Dispatch
     </p>
 </div>

@@ -1,6 +1,7 @@
 package com.project.farma.transaction.model;
 
 import com.project.farma.batch.model.Batch;
+import com.project.farma.farm.model.Farm;
 import com.project.farma.organisation.model.Organisation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +40,10 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "batch_id")
     private Batch batch;
+
+    @ManyToOne
+    @JoinColumn(name = "farm_id")
+    private Farm farm;
 
     @ManyToOne
     @JoinColumn(name = "organisation_id")

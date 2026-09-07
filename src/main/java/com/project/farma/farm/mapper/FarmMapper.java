@@ -13,7 +13,7 @@ public class FarmMapper {
                 .name(requestDto.name())
                 .address(requestDto.address())
                 .longitude(requestDto.longitude())
-                .latitude(requestDto.longitude())
+                .latitude(requestDto.latitude())
                 .isActive(requestDto.isActive())
                 .build();
     }

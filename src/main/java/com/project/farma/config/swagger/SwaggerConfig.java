@@ -17,12 +17,10 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Farma Agronomic Matrix Management API") // ◄ Updated
+                        .title("Farma Agronomic Matrix Management API")
                         .version("1.0")
-                        .description("Secure Multi-Tenant API Architecture for Digital Farm Hub Provisioning, Live Weather Telemetry, and Biosecurity Analytics Logging.")) // ◄ Updated
-                // 1. Force Swagger to recognize that a JWT Authorization header is required
+                        .description("Secure Multi-Tenant API Architecture for Digital Farm Hub Provisioning, Live Weather Telemetry, and Biosecurity Analytics Logging."))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                // 2. Define the exact input format for the global Authorize padlock dialog box
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
                                 new SecurityScheme()

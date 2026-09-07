@@ -8,6 +8,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,11 +54,28 @@ public class InventoryController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @PostMapping("/{inventoryId}/restock")
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(summary = "Restock existing inventory (Applies Weighted Average Costing)")
+    public ResponseEntity<InventoryResponseDto> restockInventory(
+            @PathVariable Long inventoryId,
+            @RequestParam Double addedQuantity,
+            @RequestParam Double newUnitPrice
+    ) {
+        InventoryResponseDto updated = inventoryService.restockInventory(inventoryId, addedQuantity, newUnitPrice);
+        return ResponseEntity.ok(updated);
+    }
+
     @GetMapping("/farm/{farmId}")
     @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
     @Operation(summary = "Fetch Inventory Stock Items for a Farm Facility")
-    public ResponseEntity<List<InventoryResponseDto>> getInventoriesByFarm(@PathVariable Long farmId) {
-        List<InventoryResponseDto> items = inventoryService.getInventoriesByFarm(farmId);
+    public ResponseEntity<Page<InventoryResponseDto>> getInventoriesByFarm(
+            @PathVariable Long farmId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("expiryDate").ascending());
+        Page<InventoryResponseDto> items = inventoryService.getInventoriesByFarm(farmId, pageable);
         return ResponseEntity.ok(items);
     }
 

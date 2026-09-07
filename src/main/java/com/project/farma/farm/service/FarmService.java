@@ -13,11 +13,11 @@ import com.project.farma.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,11 +43,9 @@ public class FarmService {
         return farmMapper.toFarmResponseDto(savedFarm);
     }
 
-    public List<FarmResponseDto> getFarmsByOrganisation(Long organisationId) {
-        return farmRepository.findAllByOrganisationId(organisationId)
-                .stream()
-                .map(farmMapper::toFarmResponseDto)
-                .toList();
+    public Page<FarmResponseDto> getFarmsByOrganisation(Long organisationId, Pageable pageable) {
+        return farmRepository.findAllByOrganisationId(organisationId, pageable)
+                .map(farmMapper::toFarmResponseDto);
     }
 
     public Farm getFarmById(Long farmId) {
@@ -61,6 +59,8 @@ public class FarmService {
         return farmMapper.toFarmResponseDto(farm);
     }
 
+
+    // PRIVATE HELPER METHOD
 
     private void handleOrganisationAndManagerValidation(Organisation organisation, User manager, FarmRequestDto requestDto) {
         if (farmRepository.existsByNameAndOrganisationId(requestDto.name(), requestDto.organisationId())) {

@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: farma
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:farma_db}
     username: ${DB_USER:postgres}
@@ -23,6 +26,13 @@ spring:
           starttls:
             enable: true
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    operations-sorter: alpha
+    tags-sorter: alpha
+
 weather:
   api:
     key: ${WEATHER_API_KEY}
@@ -31,3 +41,7 @@ weather:
 app:
   frontend:
     url: ${FRONTEND_URL:https://www.farma.com.ng}
+
+jwt:
+  secret: ${JWT_SECRET:3c9a6f8b5d2e7c4a1b0d9f8e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b}
+  expiration: ${JWT_EXPIRATION:86400000}
