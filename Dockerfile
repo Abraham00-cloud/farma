@@ -1,4 +1,4 @@
-FROM openjdk:25-jdk-slim AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 COPY mvnw .
@@ -9,7 +9,7 @@ COPY src src
 RUN chmod +x mvnw
 RUN ./mvnw clean package -DskipTests
 
-FROM openjdk:25-jdk-slim
+FROM eclipse-temurin:25-jdk
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
