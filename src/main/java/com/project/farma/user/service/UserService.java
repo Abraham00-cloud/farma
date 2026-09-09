@@ -1,6 +1,6 @@
 package com.project.farma.user.service;
-
 import com.project.farma.common.event.dto.ManagerCreatedEvent;
+import com.project.farma.common.event.service.EmailValidator;
 import com.project.farma.organisation.model.Organisation;
 import com.project.farma.organisation.repository.OrganisationRepository;
 import com.project.farma.security.JwtService;
@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,9 +34,12 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserResponseDto createUser(UserRequestDto requestDto, Long currentPrincipalId) {
+        EmailValidator.validateOriginalEmail(requestDto.email());
+
         if (userRepository.existsByEmail(requestDto.email())){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
@@ -69,7 +73,7 @@ public class UserService {
         Long organisationId = user.getOrganisation() != null ? user.getOrganisation().getId() : null;
         String token = jwtService.generateToken(loginRequestDto.email(), user.getId(), organisationId);
 
-        return new AuthResponseDto(token, user.getEmail(), user.getRole(), organisationId);
+        return new AuthResponseDto(token, user.getEmail(), user.getRole(), organisationId, user.isRequiresPasswordChange());
     }
 
     @Transactional
@@ -111,6 +115,14 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
+    @Transactional
+    public void forceUpdatePassword(Long userId, String newPassword) {
+        User user = findById(userId);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setRequiresPasswordChange(false); // Clear the security flag
+        userRepository.save(user);
+    }
+
     // PRIVATE HELPER METHODS
 
     private void handleProprietorCreation(User user) {
@@ -129,6 +141,8 @@ public class UserService {
         }
 
         user.setParent(proprietor);
+        // 4. Force managers to update their auto-generated password on first login
+        user.setRequiresPasswordChange(true);
     }
 
     private void handlePostCreationEvents(User savedUser, String rawPassword) {

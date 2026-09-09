@@ -88,4 +88,19 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Password has been successfully updated. You may now sign in."));
     }
+
+    @PostMapping("/force-password-update")
+    @Operation(
+            summary = "Execute Compulsory Password Reset for New Managers",
+            description = "Consumes the temporary password JWT and secures the account with a permanent user-defined password."
+    )
+    public ResponseEntity<Map<String, String>> forcePasswordUpdate(@RequestBody Map<String, String> request) {
+        // Securely extract the ID from the currently authenticated JWT token
+        Long currentUserId = ((FarmUserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        String newPassword = request.get("newPassword");
+
+        userService.forceUpdatePassword(currentUserId, newPassword);
+
+        return ResponseEntity.ok(Map.of("message", "Password secured successfully."));
+    }
 }

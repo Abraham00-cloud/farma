@@ -6,6 +6,6 @@ public record AuthResponseDto (
         String token,
         String email,
         Role role,
-        Long organisationId
-) {
-}
+        Long organisationId,
+        boolean requiresPasswordChange
+) {}
