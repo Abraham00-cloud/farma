@@ -60,7 +60,7 @@ public class EmailService {
             Context context = new Context();
             context.setVariable("resetUrl", resetUrl);
 
-            String htmlContent = templateEngine.process("password-recovery", context);
+            String htmlContent = templateEngine.process("password-reset-email", context);
 
             sendViaResendApi(email, "FARMA - Password Recovery Request", htmlContent, FROM_SUPPORT);
         } catch (Exception e) {
