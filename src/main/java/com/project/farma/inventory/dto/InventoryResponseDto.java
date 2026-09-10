@@ -12,6 +12,7 @@ public record InventoryResponseDto(
         Long farmId,
         String farmName,
         Double currentQuantity,
+        String unit,
         String unitPrice,
 
         Double totalValue,

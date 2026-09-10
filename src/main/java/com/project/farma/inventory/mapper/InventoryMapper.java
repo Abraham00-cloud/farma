@@ -32,6 +32,7 @@ public class InventoryMapper {
                 inventory.getFarm().getId(),
                 inventory.getFarm().getName(),
                 inventory.getCurrentQuantity(),
+                inventory.getUnit(),
                 inventory.getUnitPrice().toString(),
                 totalValue,
                 inventory.getExpiryDate(),
