@@ -34,7 +34,10 @@ public record DailyLogRequestDto (
         @Size(max = 500, message = "Observations must not exceed 500 characters")
         String observations,
 
-        Long assignedToId
+        Long assignedToId,
+
+        @Min(value = 0, message = "Egg count cannot be negative")
+        Integer eggsCollected
 ) {
 
 }

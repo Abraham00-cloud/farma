@@ -118,8 +118,6 @@ public class BatchService {
                 .map(batchMapper::toBatchResponseDto);
     }
 
-    // INTERNAL SERVICE METHODS (For Analytics & Finance)
-
     public List<Batch> getBatchEntitiesByFarmId(Long farmId) {
         return batchRepository.findBySectionFarmId(farmId);
     }
@@ -127,8 +125,6 @@ public class BatchService {
     public List<Batch> getBatchEntitiesBySectionId(Long sectionId) {
         return batchRepository.findBySectionId(sectionId);
     }
-
-    // PRIVATE HELPER METHODS
 
     private String generateBatchNumber(Section section) {
         return section.getName().toUpperCase().replace(" ", "") + "-" + System.currentTimeMillis();
@@ -153,13 +149,14 @@ public class BatchService {
     private void logFinalHarvestTransaction(Batch batch, BatchCloseRequestDto closeDto) {
         if (closeDto.totalSaleRevenue() != null && closeDto.totalSaleRevenue() > 0) {
             Long organisationId = batch.getSection().getFarm().getOrganisation().getId();
+            Long farmId = batch.getSection().getFarm().getId();
             String harvestNotes = closeDto.harvestNotes() != null && !closeDto.harvestNotes().isBlank() ? closeDto.harvestNotes() : "N/A";
 
             String auditNarrative = String.format("Final Harvest Revenue: Sold %d birds from %s (Batch #%s). Notes: %s",
                     closeDto.totalBirdsSold(), batch.getSection().getName(), batch.getBatchNumber(), harvestNotes);
 
             transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                    organisationId, batch.getId(), closeDto.totalSaleRevenue(),
+                    organisationId, batch.getId(), farmId, closeDto.totalSaleRevenue(),
                     TransactionType.CREDIT, TransactionCategory.LIVESTOCK_SALE, auditNarrative
             ));
         }
@@ -168,13 +165,14 @@ public class BatchService {
     private void logPartialSaleTransaction(Batch batch, PartialSaleRequestDto requestDto) {
         if (requestDto.saleRevenue() != null && requestDto.saleRevenue() > 0) {
             Long organisationId = batch.getSection().getFarm().getOrganisation().getId();
+            Long farmId = batch.getSection().getFarm().getId();
             String notes = requestDto.notes() != null && !requestDto.notes().isBlank() ? requestDto.notes() : "N/A";
 
             String auditNarrative = String.format("Partial Sale: Sold %d birds from %s (Batch #%s). Notes: %s",
                     requestDto.birdsSold(), batch.getSection().getName(), batch.getBatchNumber(), notes);
 
             transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                    organisationId, batch.getId(), requestDto.saleRevenue(),
+                    organisationId, batch.getId(), farmId, requestDto.saleRevenue(),
                     TransactionType.CREDIT, TransactionCategory.LIVESTOCK_SALE, auditNarrative
             ));
         }

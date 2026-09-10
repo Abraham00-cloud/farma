@@ -3,6 +3,7 @@ package com.project.farma.inventory.controller;
 
 import com.project.farma.inventory.dto.InventoryRequestDto;
 import com.project.farma.inventory.dto.InventoryResponseDto;
+import com.project.farma.inventory.dto.ProduceSaleRequestDto;
 import com.project.farma.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/inventories")
@@ -66,6 +65,17 @@ public class InventoryController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/produce/sale")
+    @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
+    @Operation(
+            summary = "Record Produce Sale",
+            description = "Deducts farm produce (e.g., eggs) from inventory and automatically logs the financial revenue into the corporate transaction ledger."
+    )
+    public ResponseEntity<Void> recordProduceSale(@Valid @RequestBody ProduceSaleRequestDto requestDto) {
+        inventoryService.recordProduceSale(requestDto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @GetMapping("/farm/{farmId}")
     @PreAuthorize("hasAnyRole('PROPRIETOR', 'MANAGER')")
     @Operation(summary = "Fetch Inventory Stock Items for a Farm Facility")
@@ -78,5 +88,4 @@ public class InventoryController {
         Page<InventoryResponseDto> items = inventoryService.getInventoriesByFarm(farmId, pageable);
         return ResponseEntity.ok(items);
     }
-
 }

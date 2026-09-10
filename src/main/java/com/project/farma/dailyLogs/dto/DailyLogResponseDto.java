@@ -19,6 +19,8 @@ public record DailyLogResponseDto(
         Integer mortalityCount,
         Double averageWeight,
 
+        Integer eggsCollected,
+
         String observations,
 
         String recordedByName,

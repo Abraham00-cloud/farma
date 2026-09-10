@@ -65,6 +65,8 @@ public class DailyLogService {
         dailyLog.setRecordedBy(auditorUser);
 
         handleFeedAndMedicineDeductions(requestDto, dailyLog, batch);
+        handleProduceAddition(requestDto, dailyLog, batch);
+
         batchService.updateBatchMortality(requestDto.batchId(), requestDto.mortalityCount());
 
         DailyLog savedDailyLog = dailyLogRepository.save(dailyLog);
@@ -81,6 +83,7 @@ public class DailyLogService {
         revertMortalityIfNecessary(log);
         revertFeedInventoryAndRefund(log, organisationId);
         revertMedicineInventoryAndRefund(log, organisationId);
+        revertProduceInventory(log);
 
         systemAlertRepository.deleteAllByDailyLogId(logId);
         dailyLogRepository.delete(log);
@@ -96,8 +99,10 @@ public class DailyLogService {
 
         revertFeedInventoryAndRefund(existingLog, organisationId);
         revertMedicineInventoryAndRefund(existingLog, organisationId);
+        revertProduceInventory(existingLog);
 
         handleFeedAndMedicineDeductions(requestDto, existingLog, batch);
+        handleProduceAddition(requestDto, existingLog, batch);
 
         updateBasicLogFields(existingLog, requestDto);
 
@@ -118,7 +123,6 @@ public class DailyLogService {
         return dailyLogRepository.findByBatchIdAndLogDateBetween(batchId, startDate, endDate, pageable)
                 .map(dailyLogMapper::toDailyLogResponseDto);
     }
-
 
     @Async
     public void runLogAnalyticsEngine(DailyLog savedLog, Batch activeBatch) {
@@ -154,11 +158,7 @@ public class DailyLogService {
         }
     }
 
-
-    // INTERNAL SERVICE METHODS (For Analytics Engine)
-
     public List<DailyLog> getLogEntitiesForBatch(Long batchId) {
-        // Analytics usually process data chronologically, so we sort Ascending
         return dailyLogRepository.findByBatchId(batchId, Sort.by("logDate").ascending());
     }
 
@@ -167,8 +167,6 @@ public class DailyLogService {
                 batchId, startDate, endDate, Sort.by("logDate").ascending()
         );
     }
-
-    // PRIVATE HELPER METHODS
 
     private DailyLog getDailyLogEntityById(Long logId) {
         return dailyLogRepository.findById(logId)
@@ -203,6 +201,25 @@ public class DailyLogService {
         }
     }
 
+    private void handleProduceAddition(DailyLogRequestDto requestDto, DailyLog dailyLog, Batch batch) {
+        if (requestDto.eggsCollected() != null && requestDto.eggsCollected() > 0) {
+            Inventory eggInventory = inventoryService.getOrCreateEggInventory(batch.getSection().getFarm());
+            inventoryService.updateStockLevel(eggInventory.getId(), (double) requestDto.eggsCollected());
+            dailyLog.setEggsCollected(requestDto.eggsCollected());
+
+            log.info("Auto-Stocked {} eggs into Inventory ID: {} for Farm: {}",
+                    requestDto.eggsCollected(), eggInventory.getId(), batch.getSection().getFarm().getName());
+        }
+    }
+
+    private void revertProduceInventory(DailyLog log) {
+        if (log.getEggsCollected() != null && log.getEggsCollected() > 0) {
+            Inventory eggInventory = inventoryService.getOrCreateEggInventory(log.getBatch().getSection().getFarm());
+            inventoryService.updateStockLevel(eggInventory.getId(), -(double) log.getEggsCollected());
+            log.setEggsCollected(0);
+        }
+    }
+
     private void handleFeedAndMedicineDeductions(DailyLogRequestDto requestDto, DailyLog dailyLog, Batch batch) {
         Long organisationId = batch.getSection().getFarm().getOrganisation().getId();
         Long farmId = batch.getSection().getFarm().getId();
@@ -219,7 +236,7 @@ public class DailyLogService {
 
             String feedDescription = String.format("Consumed %.2f of %s for Batch %s", requestDto.feedQuantityUsed(), feedItem.getName(), batch.getBatchNumber());
             transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                    organisationId, batch.getId(), feedCost, TransactionType.DEBIT, TransactionCategory.FEED_CONSUMPTION, feedDescription
+                    organisationId, batch.getId(), farmId, feedCost, TransactionType.DEBIT, TransactionCategory.FEED_CONSUMPTION, feedDescription
             ));
         }
 
@@ -235,7 +252,7 @@ public class DailyLogService {
 
             String medicineDescription = String.format("Administered %.2f of %s to Batch %s", requestDto.medicineQuantityUsed(), medicineItem.getName(), batch.getBatchNumber());
             transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                    organisationId, batch.getId(), medicineCost, TransactionType.DEBIT, TransactionCategory.MEDICINE_CONSUMPTION, medicineDescription
+                    organisationId, batch.getId(), farmId, medicineCost, TransactionType.DEBIT, TransactionCategory.MEDICINE_CONSUMPTION, medicineDescription
             ));
         }
     }
@@ -272,8 +289,9 @@ public class DailyLogService {
             Double feedRefund = log.getHistoricalFeedCost() != null ? log.getHistoricalFeedCost() : 0.0;
 
             if (feedRefund > 0) {
+                Long farmId = log.getBatch().getSection().getFarm().getId();
                 transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                        organisationId, log.getBatch().getId(), feedRefund, TransactionType.CREDIT, TransactionCategory.OTHER_INCOME, "AUTO-REVERSAL: Refunded feed cost."
+                        organisationId, log.getBatch().getId(), farmId, feedRefund, TransactionType.CREDIT, TransactionCategory.OTHER_INCOME, "AUTO-REVERSAL: Refunded feed cost."
                 ));
             }
             log.setFeedInventory(null);
@@ -288,8 +306,9 @@ public class DailyLogService {
             Double medicineRefund = log.getHistoricalMedicineCost() != null ? log.getHistoricalMedicineCost() : 0.0;
 
             if (medicineRefund > 0) {
+                Long farmId = log.getBatch().getSection().getFarm().getId();
                 transactionService.createInternalTransaction(new InternalTransactionRequestDto(
-                        organisationId, log.getBatch().getId(), medicineRefund, TransactionType.CREDIT, TransactionCategory.OTHER_INCOME, "AUTO-REVERSAL: Refunded medicine cost."
+                        organisationId, log.getBatch().getId(), farmId, medicineRefund, TransactionType.CREDIT, TransactionCategory.OTHER_INCOME, "AUTO-REVERSAL: Refunded medicine cost."
                 ));
             }
             log.setMedicineInventory(null);
@@ -305,5 +324,6 @@ public class DailyLogService {
         existingLog.setAdministrationMethod(requestDto.administrationMethod());
         existingLog.setFeedQuantityUsed(requestDto.feedQuantityUsed());
         existingLog.setMedicineQuantityUsed(requestDto.medicineQuantityUsed());
+        existingLog.setEggsCollected(requestDto.eggsCollected() != null ? requestDto.eggsCollected() : 0);
     }
 }

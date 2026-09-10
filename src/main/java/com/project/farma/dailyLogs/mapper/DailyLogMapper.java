@@ -16,6 +16,7 @@ public class DailyLogMapper {
                 .administrationMethod(requestDto.administrationMethod())
                 .mortalityCount(requestDto.mortalityCount() != null ? requestDto.mortalityCount() : 0)
                 .averageWeight(requestDto.averageWeight())
+                .eggsCollected(requestDto.eggsCollected() != null ? requestDto.eggsCollected() : 0)
                 .observations(requestDto.observations())
                 .build();
     }
@@ -26,21 +27,20 @@ public class DailyLogMapper {
         return new DailyLogResponseDto(
                 dailyLog.getId(),
                 dailyLog.getLogDate(),
+
                 dailyLog.getBatch() != null ? dailyLog.getBatch().getId() : null,
                 dailyLog.getBatch() != null ? dailyLog.getBatch().getBatchNumber() : "UNKNOWN_BATCH",
 
-
                 dailyLog.getFeedInventory() != null ? dailyLog.getFeedInventory().getName() : "None Applied",
                 dailyLog.getFeedQuantityUsed(),
-
 
                 dailyLog.getMedicineInventory() != null ? dailyLog.getMedicineInventory().getName() : "None Applied",
                 dailyLog.getMedicineQuantityUsed(),
 
                 dailyLog.getMortalityCount(),
                 dailyLog.getAverageWeight(),
+                dailyLog.getEggsCollected(),
                 dailyLog.getObservations(),
-
 
                 dailyLog.getRecordedBy() != null
                         ? dailyLog.getRecordedBy().getFirstName() + " " + dailyLog.getRecordedBy().getLastName()

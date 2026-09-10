@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FarmService {
@@ -60,6 +62,12 @@ public class FarmService {
     }
 
 
+    public List<Farm> getFarmsByOrganisationId(Long organisationId) {
+        return farmRepository.findAllByOrganisationId(organisationId);
+    }
+
+
+
     // PRIVATE HELPER METHOD
 
     private void handleOrganisationAndManagerValidation(Organisation organisation, User manager, FarmRequestDto requestDto) {
@@ -75,4 +83,3 @@ public class FarmService {
         }
     }
 }
-

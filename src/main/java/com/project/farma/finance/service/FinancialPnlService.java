@@ -2,12 +2,15 @@ package com.project.farma.finance.service;
 
 import com.project.farma.batch.model.Batch;
 import com.project.farma.batch.service.BatchService;
+import com.project.farma.dailyLogs.model.DailyLog;
+import com.project.farma.dailyLogs.service.DailyLogService;
+import com.project.farma.farm.model.Farm;
+import com.project.farma.farm.service.FarmService;
 import com.project.farma.finance.calculator.FinancialPnlCalculator;
-import com.project.farma.finance.dto.BatchFinancialPnlResponseDto;
-import com.project.farma.finance.dto.BatchFinancialSummaryDto;
-import com.project.farma.finance.dto.FarmFinancialOverviewDto;
-import com.project.farma.finance.dto.FinancialCategoryBreakdownDto;
+import com.project.farma.finance.dto.*;
 import com.project.farma.finance.mapper.FinancialPnlMapper;
+import com.project.farma.inventory.model.Inventory;
+import com.project.farma.inventory.service.InventoryService;
 import com.project.farma.transaction.model.Transaction;
 import com.project.farma.transaction.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,10 @@ public class FinancialPnlService {
     private final FinancialPnlCalculator calculator;
     private final FinancialPnlMapper mapper;
 
+    // Injected for the Valuation Engine
+    private final DailyLogService dailyLogService;
+    private final InventoryService inventoryService;
+    private final FarmService farmService;
 
     public BatchFinancialPnlResponseDto getBatchPnlAnalysis(Long batchId) {
         Batch batch = batchService.getBatchById(batchId);
@@ -71,7 +78,98 @@ public class FinancialPnlService {
         );
     }
 
+    // =========================================================================================
+    // NEW: VALUATION / SCENARIO PLANNER ENGINE
+    // =========================================================================================
+
+    public ValuationResponseDto calculateProjectedValuation(ValuationRequestDto request) {
+        String scopeName = "";
+        int liveBirds = 0;
+        double totalWeightKg = 0.0;
+        double produceUnits = 0.0;
+        double totalCosts = 0.0;
+
+        double pricePerKg = request.projectedPricePerKg() != null ? request.projectedPricePerKg() : 0.0;
+        double pricePerProduce = request.projectedPricePerProduceUnit() != null ? request.projectedPricePerProduceUnit() : 0.0;
+
+        switch (request.scope().toUpperCase()) {
+            case "BATCH":
+                Batch batch = batchService.getBatchById(request.scopeId());
+                scopeName = "Batch #" + batch.getBatchNumber();
+                liveBirds = batch.getCurrentCount();
+                totalWeightKg = calculateBatchWeight(batch);
+
+                // Reuse existing transaction calculator logic!
+                List<Transaction> batchTxns = transactionService.getRawTransactionsForBatch(batch.getId());
+                totalCosts = calculator.calculateTotalExpenses(batchTxns);
+                break;
+
+            case "FARM":
+                Farm farm = farmService.getFarmById(request.scopeId());
+                scopeName = "Farm: " + farm.getName();
+
+                List<Batch> farmBatches = batchService.getBatchEntitiesByFarmId(farm.getId());
+                for (Batch b : farmBatches) {
+                    if ("ACTIVE".equals(b.getStatus().name())) {
+                        liveBirds += b.getCurrentCount();
+                        totalWeightKg += calculateBatchWeight(b);
+                    }
+                }
+
+                produceUnits = getFarmProduceStock(farm);
+                List<Transaction> farmTxns = transactionService.getRawTransactionsForFarm(farm.getId());
+                totalCosts = calculator.calculateTotalExpenses(farmTxns);
+                break;
+
+            case "ORGANISATION":
+                scopeName = "Entire Organisation ID: " + request.scopeId();
+                List<Farm> allFarms = farmService.getFarmsByOrganisationId(request.scopeId());
+
+                for (Farm f : allFarms) {
+                    List<Batch> fb = batchService.getBatchEntitiesByFarmId(f.getId());
+                    for (Batch b : fb) {
+                        if ("ACTIVE".equals(b.getStatus().name())) {
+                            liveBirds += b.getCurrentCount();
+                            totalWeightKg += calculateBatchWeight(b);
+                        }
+                    }
+                    produceUnits += getFarmProduceStock(f);
+
+                    List<Transaction> orgFarmTxns = transactionService.getRawTransactionsForFarm(f.getId());
+                    totalCosts += calculator.calculateTotalExpenses(orgFarmTxns);
+                }
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid scope. Use BATCH, FARM, or ORGANISATION");
+        }
+
+        // Calculate Projections
+        double projectedMeatRevenue = totalWeightKg * pricePerKg;
+        double projectedProduceRevenue = produceUnits * pricePerProduce;
+        double totalRevenue = projectedMeatRevenue + projectedProduceRevenue;
+
+        double projectedProfit = calculator.calculateNetProfit(totalRevenue, totalCosts);
+        double profitMargin = calculator.calculateProfitMarginPercentage(projectedProfit, totalRevenue);
+
+        return new ValuationResponseDto(
+                request.scope().toUpperCase(),
+                scopeName,
+                liveBirds,
+                totalWeightKg,
+                produceUnits,
+                projectedMeatRevenue,
+                projectedProduceRevenue,
+                totalRevenue,
+                totalCosts,
+                projectedProfit,
+                profitMargin
+        );
+    }
+
+    // =========================================================================================
     // PRIVATE HELPER METHODS
+    // =========================================================================================
 
     private BatchFinancialSummaryDto buildBatchSummary(Batch batch, List<Transaction> farmTransactions) {
         List<Transaction> batchTxns = farmTransactions.stream()
@@ -96,5 +194,29 @@ public class FinancialPnlService {
 
     private int determinePopulationForMath(Batch batch) {
         return batch.getCurrentCount() > 0 ? batch.getCurrentCount() : batch.getInitialCount();
+    }
+
+    private double calculateBatchWeight(Batch batch) {
+        List<DailyLog> logs = dailyLogService.getLogEntitiesForBatch(batch.getId());
+        double latestWeight = 0.0;
+
+        // Iterate backwards to find the most recent valid weight recording
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            if (logs.get(i).getAverageWeight() != null && logs.get(i).getAverageWeight() > 0) {
+                latestWeight = logs.get(i).getAverageWeight();
+                break;
+            }
+        }
+
+        return batch.getCurrentCount() * latestWeight;
+    }
+
+    private double getFarmProduceStock(Farm farm) {
+        try {
+            Inventory eggInventory = inventoryService.getOrCreateEggInventory(farm);
+            return eggInventory.getCurrentQuantity();
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 }

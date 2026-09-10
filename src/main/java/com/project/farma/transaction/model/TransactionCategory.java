@@ -3,6 +3,7 @@ package com.project.farma.transaction.model;
 public enum TransactionCategory {
     LIVESTOCK_SALE,
     EQUIPMENT_PURCHASE,
+    PRODUCE_SALE,
     LABOR_COST,
     UTILITY_BILL,
 

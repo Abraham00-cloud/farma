@@ -9,8 +9,9 @@ public record InternalTransactionRequestDto(
         @NotNull(message = "Organisation ID is required")
         Long organisationId,
 
-        @NotNull(message = "Batch ID is required")
         Long batchId,
+
+        Long farmId,
 
         @NotNull(message = "Amount is required")
         @Min(value = 0, message = "Amount cannot be less than zero")

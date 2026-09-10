@@ -53,8 +53,17 @@ public class TransactionService {
     @Transactional
     public void createInternalTransaction(InternalTransactionRequestDto requestDto) {
         Organisation organisation = organisationService.findById(requestDto.organisationId());
-        Batch batch = batchRepository.findById(requestDto.batchId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Batch not found"));
+
+        Batch batch = null;
+        Farm farm = null;
+
+        if (requestDto.batchId() != null) {
+            batch = batchRepository.findById(requestDto.batchId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Batch not found"));
+            farm = batch.getSection().getFarm();
+        } else if (requestDto.farmId() != null) {
+            farm = farmService.getFarmById(requestDto.farmId());
+        }
 
         Transaction internalTransaction = Transaction.builder()
                 .amount(requestDto.amount())
@@ -65,7 +74,7 @@ public class TransactionService {
                 .isCashFlow(false)
                 .organisation(organisation)
                 .batch(batch)
-                .farm(batch.getSection().getFarm())
+                .farm(farm)
                 .createdAt(LocalDateTime.now())
                 .build();
 
