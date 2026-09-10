@@ -87,7 +87,10 @@ public class FinancialPnlService {
         int liveBirds = 0;
         double totalWeightKg = 0.0;
         double produceUnits = 0.0;
-        double totalCosts = 0.0;
+
+        // Split historical ledger into actuals
+        double actualSunkCosts = 0.0;
+        double realizedRevenue = 0.0;
 
         double pricePerKg = request.projectedPricePerKg() != null ? request.projectedPricePerKg() : 0.0;
         double pricePerProduce = request.projectedPricePerProduceUnit() != null ? request.projectedPricePerProduceUnit() : 0.0;
@@ -99,9 +102,10 @@ public class FinancialPnlService {
                 liveBirds = batch.getCurrentCount();
                 totalWeightKg = calculateBatchWeight(batch);
 
-                // Reuse existing transaction calculator logic!
+                // Fetch true financial history for this batch
                 List<Transaction> batchTxns = transactionService.getRawTransactionsForBatch(batch.getId());
-                totalCosts = calculator.calculateTotalExpenses(batchTxns);
+                actualSunkCosts = calculator.calculateTotalExpenses(batchTxns);
+                realizedRevenue = calculator.calculateTotalRevenue(batchTxns);
                 break;
 
             case "FARM":
@@ -117,8 +121,11 @@ public class FinancialPnlService {
                 }
 
                 produceUnits = getFarmProduceStock(farm);
+
+                // Fetch true financial history for the entire farm
                 List<Transaction> farmTxns = transactionService.getRawTransactionsForFarm(farm.getId());
-                totalCosts = calculator.calculateTotalExpenses(farmTxns);
+                actualSunkCosts = calculator.calculateTotalExpenses(farmTxns);
+                realizedRevenue = calculator.calculateTotalRevenue(farmTxns);
                 break;
 
             case "ORGANISATION":
@@ -135,8 +142,10 @@ public class FinancialPnlService {
                     }
                     produceUnits += getFarmProduceStock(f);
 
+                    // Fetch true financial history across all farms
                     List<Transaction> orgFarmTxns = transactionService.getRawTransactionsForFarm(f.getId());
-                    totalCosts += calculator.calculateTotalExpenses(orgFarmTxns);
+                    actualSunkCosts += calculator.calculateTotalExpenses(orgFarmTxns);
+                    realizedRevenue += calculator.calculateTotalRevenue(orgFarmTxns);
                 }
                 break;
 
@@ -144,13 +153,15 @@ public class FinancialPnlService {
                 throw new IllegalArgumentException("Invalid scope. Use BATCH, FARM, or ORGANISATION");
         }
 
-        // Calculate Projections
+        // 1. Calculate Future Asset Value (What you are predicting to sell)
         double projectedMeatRevenue = totalWeightKg * pricePerKg;
         double projectedProduceRevenue = produceUnits * pricePerProduce;
-        double totalRevenue = projectedMeatRevenue + projectedProduceRevenue;
+        double totalUnsoldAssetValue = projectedMeatRevenue + projectedProduceRevenue;
 
-        double projectedProfit = calculator.calculateNetProfit(totalRevenue, totalCosts);
-        double profitMargin = calculator.calculateProfitMarginPercentage(projectedProfit, totalRevenue);
+        // 2. The Final Valuation Math (Realized + Unsold - Sunk Costs)
+        double totalProjectedRevenue = realizedRevenue + totalUnsoldAssetValue;
+        double projectedNetProfit = totalProjectedRevenue - actualSunkCosts;
+        double profitMargin = totalProjectedRevenue > 0 ? (projectedNetProfit / totalProjectedRevenue) * 100 : 0.0;
 
         return new ValuationResponseDto(
                 request.scope().toUpperCase(),
@@ -158,11 +169,11 @@ public class FinancialPnlService {
                 liveBirds,
                 totalWeightKg,
                 produceUnits,
-                projectedMeatRevenue,
-                projectedProduceRevenue,
-                totalRevenue,
-                totalCosts,
-                projectedProfit,
+                realizedRevenue,          // Exact money already made
+                totalUnsoldAssetValue,    // Value of physical assets waiting to be sold
+                totalProjectedRevenue,    // The grand total of past + future income
+                actualSunkCosts,          // Every kobo already spent
+                projectedNetProfit,
                 profitMargin
         );
     }

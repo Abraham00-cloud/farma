@@ -1,16 +1,17 @@
 package com.project.farma.finance.dto;
 
-
 public record ValuationResponseDto(
         String scope,
         String scopeName,
-        Integer totalLiveBirds,
-        Double estimatedTotalWeightKg,
-        Double totalProduceInStock,
-        Double projectedMeatRevenue,
-        Double projectedProduceRevenue,
+        Integer liveBirds,
+        Double totalWeightKg,
+        Double produceUnits,
+
+        Double realizedRevenue,
+        Double totalUnsoldAssetValue,
         Double totalProjectedRevenue,
-        Double totalIncurredCosts,
+        Double actualSunkCosts,
+
         Double projectedNetProfit,
-        Double projectedProfitMarginPercentage
+        Double profitMargin
 ) {}
